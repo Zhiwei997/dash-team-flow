@@ -5,37 +5,54 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Navigation from "@/components/Navigation";
 import { User, Mail, Phone, MapPin, Building, Flag, Hash } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserData {
-  fullName: string;
+  full_name: string;
   email: string;
-  contactNumber: string;
+  contact_number: string;
   role: string;
   city: string;
   province: string;
   country: string;
-  postalCode: string;
+  postal_code: string;
 }
 
 const Profile = () => {
-  const [user, setUser] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser");
-    if (currentUser) {
-      setUser(JSON.parse(currentUser));
-    } else {
+    if (!loading && !user) {
       navigate("/login");
+      return;
     }
-  }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    navigate("/login");
+    if (user) {
+      const fetchUserData = async () => {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (data && !error) {
+          setUserData(data);
+        }
+      };
+      
+      fetchUserData();
+    }
+  }, [user, loading, navigate]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
-  if (!user) {
+  if (loading || !userData) {
     return <div>Loading...</div>;
   }
 
@@ -61,21 +78,21 @@ const Profile = () => {
             <CardHeader className="text-center">
               <Avatar className="h-24 w-24 mx-auto mb-4">
                 <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-                  {getInitials(user.fullName)}
+                  {getInitials(userData.full_name)}
                 </AvatarFallback>
               </Avatar>
-              <CardTitle className="text-xl">{user.fullName}</CardTitle>
-              <p className="text-muted-foreground">{user.role}</p>
+              <CardTitle className="text-xl">{userData.full_name}</CardTitle>
+              <p className="text-muted-foreground">{userData.role}</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{user.email}</span>
+                  <span className="text-sm">{userData.email}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{user.contactNumber}</span>
+                  <span className="text-sm">{userData.contact_number}</span>
                 </div>
               </div>
             </CardContent>
@@ -100,15 +117,15 @@ const Profile = () => {
                     <div className="space-y-2">
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">Role:</span>
-                        <p className="text-sm">{user.role}</p>
+                        <p className="text-sm">{userData.role}</p>
                       </div>
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">Email:</span>
-                        <p className="text-sm">{user.email}</p>
+                        <p className="text-sm">{userData.email}</p>
                       </div>
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">Contact:</span>
-                        <p className="text-sm">{user.contactNumber}</p>
+                        <p className="text-sm">{userData.contact_number}</p>
                       </div>
                     </div>
                   </div>
@@ -123,25 +140,25 @@ const Profile = () => {
                     <div className="space-y-2">
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">City:</span>
-                        <p className="text-sm">{user.city}</p>
+                        <p className="text-sm">{userData.city}</p>
                       </div>
                       <div>
                         <span className="text-sm font-medium text-muted-foreground">Province/State:</span>
-                        <p className="text-sm">{user.province}</p>
+                        <p className="text-sm">{userData.province}</p>
                       </div>
                       <div className="flex items-center space-x-4">
                         <div className="flex-1">
                           <span className="text-sm font-medium text-muted-foreground">Country:</span>
                           <p className="text-sm flex items-center space-x-1">
                             <Flag className="h-3 w-3" />
-                            <span>{user.country}</span>
+                            <span>{userData.country}</span>
                           </p>
                         </div>
                         <div className="flex-1">
                           <span className="text-sm font-medium text-muted-foreground">Postal Code:</span>
                           <p className="text-sm flex items-center space-x-1">
                             <Hash className="h-3 w-3" />
-                            <span>{user.postalCode}</span>
+                            <span>{userData.postal_code}</span>
                           </p>
                         </div>
                       </div>

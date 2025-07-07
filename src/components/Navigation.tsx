@@ -1,9 +1,8 @@
-import { Search } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import UserDropdown from "@/components/UserDropdown";
+import UserSearch from "@/components/UserSearch";
 import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
@@ -56,15 +55,7 @@ const Navigation = () => {
 
         {/* Search and User */}
         <div className="flex items-center space-x-4">
-          {user && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Find"
-                className="pl-10 w-64 bg-muted/50 border-0 focus-visible:ring-1"
-              />
-            </div>
-          )}
+          {user && <UserSearch />}
           <ThemeToggle />
           {user ? (
             <UserDropdown />

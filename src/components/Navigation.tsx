@@ -1,6 +1,8 @@
 import { Search } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import ThemeToggle from "@/components/ThemeToggle";
+import UserDropdown from "@/components/UserDropdown";
 
 const Navigation = () => {
   const navItems = [
@@ -47,9 +49,8 @@ const Navigation = () => {
               className="pl-10 w-64 bg-muted/50 border-0 focus-visible:ring-1"
             />
           </div>
-          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-medium">
-            D
-          </div>
+          <ThemeToggle />
+          <UserDropdown />
         </div>
       </div>
     </nav>

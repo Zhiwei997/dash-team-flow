@@ -61,9 +61,9 @@ const Dashboard = () => {
           <ProjectHeader />
         </div>
         
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 [&>*:nth-child(4)]:md:col-start-1 [&>*:nth-child(4)]:lg:col-start-2 [&>*:nth-child(5)]:md:col-start-2 [&>*:nth-child(5)]:lg:col-start-3">
-          {features.map((feature) => (
+        {/* Features Grid - First Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {features.slice(0, 3).map((feature) => (
             <FeatureCard
               key={feature.title}
               title={feature.title}
@@ -74,6 +74,23 @@ const Dashboard = () => {
               onClick={() => handleFeatureClick(feature.title)}
             />
           ))}
+        </div>
+
+        {/* Features Grid - Second Row (Centered) */}
+        <div className="flex justify-center gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {features.slice(3, 5).map((feature) => (
+              <FeatureCard
+                key={feature.title}
+                title={feature.title}
+                description={feature.description}
+                buttonText={feature.buttonText}
+                iconBg={feature.iconBg}
+                icon={feature.icon}
+                onClick={() => handleFeatureClick(feature.title)}
+              />
+            ))}
+          </div>
         </div>
         
         {/* Recent Activity */}

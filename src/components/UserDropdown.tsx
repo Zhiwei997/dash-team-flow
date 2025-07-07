@@ -1,4 +1,6 @@
 import { Plus, User, Settings, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +12,12 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const UserDropdown = () => {
-  const handleLogout = () => {
-    console.log("Logout clicked");
-    // Add logout functionality here
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
   const handleCreateProject = () => {

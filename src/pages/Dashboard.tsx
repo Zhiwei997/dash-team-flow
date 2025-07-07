@@ -3,8 +3,13 @@ import ProjectHeader from "@/components/ProjectHeader";
 import FeatureCard from "@/components/FeatureCard";
 import RecentActivity from "@/components/RecentActivity";
 import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const features = [
     {
       title: "Message Board",
@@ -44,6 +49,10 @@ const Dashboard = () => {
   ];
 
   const handleFeatureClick = (featureTitle: string) => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
     console.log(`Clicked on ${featureTitle}`);
     // This is where you would navigate to the specific feature page
   };

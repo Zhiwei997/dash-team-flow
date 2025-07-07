@@ -51,13 +51,11 @@ const UserDropdown = () => {
   };
 
   const handleCreateProject = () => {
-    console.log("Create new project clicked");
-    // Add create project functionality here
+    navigate("/create-project");
   };
 
   const handleProfile = () => {
-    console.log("Profile clicked");
-    // Add profile navigation here
+    navigate("/profile");
   };
 
   const handleSettings = () => {

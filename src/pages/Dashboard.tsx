@@ -5,10 +5,12 @@ import RecentActivity from "@/components/RecentActivity";
 import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useUserProjects } from "@/hooks/useProjects";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { data: projects = [] } = useUserProjects();
 
   const features = [
     {
@@ -63,7 +65,9 @@ const Dashboard = () => {
       
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Title */}
-        <h1 className="text-3xl font-bold text-foreground mb-8">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-8">
+          {projects.length > 0 ? `${projects[0]?.project_name} Dashboard` : "Dashboard"}
+        </h1>
         
         {/* Project Header */}
         <div className="mb-8">

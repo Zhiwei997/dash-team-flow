@@ -2,17 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* RestoreAI Project Management Platform Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 0 0% 98%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+    --card-muted: 210 40% 96.1%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
@@ -36,7 +35,19 @@ All colors MUST be HSL.
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
+    /* Dashboard feature colors */
+    --feature-message: 214 100% 60%;
+    --feature-todos: 142 76% 55%;
+    --feature-docs: 45 100% 60%;
+    --feature-chat: 186 100% 60%;
+    --feature-jobs: 262 80% 65%;
+
+    /* Navigation colors */
+    --nav-brand: 222.2 47.4% 11.2%;
+    --nav-link: 215.4 16.3% 46.9%;
+    --nav-link-active: 142 76% 55%;
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 

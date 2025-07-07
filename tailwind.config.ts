@@ -50,7 +50,20 @@ export default {
 				},
 				card: {
 					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					foreground: 'hsl(var(--card-foreground))',
+					muted: 'hsl(var(--card-muted))'
+				},
+				feature: {
+					message: 'hsl(var(--feature-message))',
+					todos: 'hsl(var(--feature-todos))',
+					docs: 'hsl(var(--feature-docs))',
+					chat: 'hsl(var(--feature-chat))',
+					jobs: 'hsl(var(--feature-jobs))'
+				},
+				nav: {
+					brand: 'hsl(var(--nav-brand))',
+					link: 'hsl(var(--nav-link))',
+					'link-active': 'hsl(var(--nav-link-active))'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

@@ -2,9 +2,11 @@ import { ChevronDown, Settings, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const ProjectHeader = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -28,7 +30,12 @@ const ProjectHeader = () => {
             <h2 className="text-2xl font-semibold text-foreground mb-2">Project</h2>
             <p className="text-muted-foreground">➤ Please create a new project</p>
           </div>
-          <Button variant="outline" size="sm" className="bg-card hover:bg-muted">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-card hover:bg-muted"
+            onClick={() => navigate("/create-project")}
+          >
             Create Project
           </Button>
         </div>

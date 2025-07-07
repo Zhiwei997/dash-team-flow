@@ -62,7 +62,7 @@ const Dashboard = () => {
         </div>
         
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 [&>*:nth-child(4)]:md:col-start-1 [&>*:nth-child(4)]:lg:col-start-2 [&>*:nth-child(5)]:md:col-start-2 [&>*:nth-child(5)]:lg:col-start-3">
           {features.map((feature) => (
             <FeatureCard
               key={feature.title}
@@ -77,7 +77,7 @@ const Dashboard = () => {
         </div>
         
         {/* Recent Activity */}
-        <div className="max-w-2xl">
+        <div>
           <RecentActivity />
         </div>
       </div>

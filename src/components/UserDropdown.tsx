@@ -1,6 +1,8 @@
 import { Plus, User, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +14,36 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const UserDropdown = () => {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (data && !error) {
+          setUserProfile(data);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+
+  const getInitials = (fullName: string) => {
+    return fullName
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -41,7 +71,7 @@ const UserDropdown = () => {
         <button className="focus:outline-none">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-muted text-foreground text-sm font-medium">
-              D
+              {userProfile?.full_name ? getInitials(userProfile.full_name) : "U"}
             </AvatarFallback>
           </Avatar>
         </button>
@@ -49,8 +79,12 @@ const UserDropdown = () => {
       <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Delta</p>
-            <p className="text-xs leading-none text-muted-foreground">User</p>
+            <p className="text-sm font-medium leading-none">
+              {userProfile?.full_name || "User"}
+            </p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {userProfile?.role || "Member"}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

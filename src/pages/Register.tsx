@@ -154,18 +154,15 @@ const Register = () => {
 
             <div className="space-y-2">
               <Label htmlFor="role">Role *</Label>
-              <Select onValueChange={(value) => handleInputChange("role", value)} required>
-                <SelectTrigger className="bg-muted/50">
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="developer">Developer</SelectItem>
-                  <SelectItem value="designer">Designer</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="role"
+                type="text"
+                placeholder="Enter your role (e.g., Property Owner, Contractor)"
+                value={formData.role}
+                onChange={(e) => handleInputChange("role", e.target.value)}
+                required
+                className="bg-muted/50"
+              />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

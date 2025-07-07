@@ -22,6 +22,13 @@ const Navigation = () => {
       navigate("/login");
       return;
     }
+    
+    // For logged-in users, Home should go to dashboard
+    if (path === "/" && user) {
+      navigate("/");
+      return;
+    }
+    
     navigate(path);
   };
 

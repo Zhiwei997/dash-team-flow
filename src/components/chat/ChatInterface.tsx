@@ -251,17 +251,17 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="border-b border-zinc-700 p-4 bg-zinc-800/50">
+      <div className="border-b border-border p-4 bg-card/50">
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700">
+          <Button variant="ghost" size="sm" onClick={onBack} className="hover:bg-muted">
             ← Back
           </Button>
           <div>
-            <h2 className="font-semibold text-zinc-200">{getDisplayName()}</h2>
+            <h2 className="font-semibold text-foreground">{getDisplayName()}</h2>
             {conversation.type === "group" && (
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-muted-foreground">
                 {conversation.members?.length} members
               </p>
             )}
@@ -282,12 +282,12 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
               <div
                 className={`max-w-[70%] rounded-xl p-3 ${
                   message.sender_id === user?.id
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-800 text-zinc-200"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground"
                 }`}
               >
                 {message.sender_id !== user?.id && conversation.type === "group" && (
-                  <p className="text-xs text-zinc-400 mb-1 font-medium">
+                  <p className="text-xs text-muted-foreground mb-1 font-medium">
                     {message.sender?.full_name}
                   </p>
                 )}
@@ -302,20 +302,20 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
                       <img
                         src={message.file_url}
                         alt={message.file_name || "Image"}
-                        className="max-w-full h-auto rounded-lg cursor-pointer border border-zinc-600"
+                        className="max-w-full h-auto rounded-lg cursor-pointer border border-border"
                         onClick={() => window.open(message.file_url!, "_blank")}
                       />
                     ) : (
-                      <div className="flex items-center space-x-2 p-2 bg-zinc-700/50 rounded-lg border border-zinc-600">
-                        <FileText className="h-4 w-4 text-zinc-300" />
-                        <span className="text-sm flex-1 text-zinc-200">{message.file_name}</span>
+                      <div className="flex items-center space-x-2 p-2 bg-muted/50 rounded-lg border border-border">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm flex-1 text-foreground">{message.file_name}</span>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => window.open(message.file_url!, "_blank")}
-                          className="h-8 w-8 p-0 hover:bg-zinc-600"
+                          className="h-8 w-8 p-0 hover:bg-muted"
                         >
-                          <Download className="h-4 w-4 text-zinc-300" />
+                          <Download className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </div>
                     )}
@@ -323,7 +323,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
                 )}
                 
                 <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className={`${message.sender_id === user?.id ? 'text-blue-200' : 'text-zinc-500'}`}>
+                  <span className={`${message.sender_id === user?.id ? 'opacity-70' : 'text-muted-foreground'}`}>
                     {format(new Date(message.sent_at), "HH:mm")}
                   </span>
                   {getMessageStatus(message)}
@@ -336,7 +336,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="border-t border-zinc-700 p-4 bg-zinc-800/30">
+      <div className="border-t border-border p-4 bg-card/30">
         <div className="flex items-end space-x-3">
           <input
             ref={fileInputRef}
@@ -353,7 +353,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="h-10 w-10 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 rounded-xl"
+            className="h-10 w-10 p-0 hover:bg-muted rounded-xl"
           >
             <Paperclip className="h-5 w-5" />
           </Button>
@@ -364,20 +364,20 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
               placeholder="Type a message..."
               onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
               disabled={loading || uploading}
-              className="bg-zinc-800 border-zinc-600 text-zinc-200 placeholder:text-zinc-400 focus:border-blue-500 rounded-xl resize-none min-h-[40px]"
+              className="rounded-xl resize-none min-h-[40px]"
             />
           </div>
           <Button 
             onClick={sendMessage} 
             disabled={loading || uploading || !newMessage.trim()}
-            className="h-10 w-10 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+            className="h-10 w-10 p-0 rounded-xl"
           >
             <Send className="h-5 w-5" />
           </Button>
         </div>
         {uploading && (
-          <p className="text-xs text-zinc-400 mt-2 flex items-center">
-            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+          <p className="text-xs text-muted-foreground mt-2 flex items-center">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary mr-2"></div>
             Uploading file...
           </p>
         )}

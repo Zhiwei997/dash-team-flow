@@ -208,15 +208,15 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
   }
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900">
+    <div className="flex flex-col h-full">
       {/* Top Controls */}
-      <div className="p-4 border-b border-zinc-700">
+      <div className="p-4 border-b border-border">
         <div className="flex space-x-2 mb-4">
-          <Button size="sm" onClick={onNewChat} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+          <Button size="sm" onClick={onNewChat} className="flex-1">
             <MessageCircle className="h-4 w-4 mr-2" />
             New Chat
           </Button>
-          <Button size="sm" variant="outline" onClick={onNewGroup} className="flex-1 border-zinc-600 text-zinc-200 hover:bg-zinc-800">
+          <Button size="sm" variant="outline" onClick={onNewGroup} className="flex-1">
             <Users className="h-4 w-4 mr-2" />
             New Group
           </Button>
@@ -224,12 +224,12 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
         
         {/* Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search conversations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-zinc-800 border-zinc-600 text-zinc-200 placeholder:text-zinc-400 focus:border-blue-500"
+            className="pl-10"
           />
         </div>
       </div>
@@ -239,8 +239,8 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
         <div className="p-2">
           {filteredConversations.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-zinc-400 mb-4">No conversations found</p>
-              <Button onClick={onNewChat} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <p className="text-muted-foreground mb-4">No conversations found</p>
+              <Button onClick={onNewChat}>
                 Start your first chat
               </Button>
             </div>
@@ -250,15 +250,15 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
                 key={conversation.id}
                 className={`flex items-center space-x-3 p-3 mx-1 mb-2 rounded-xl cursor-pointer transition-all duration-200 ${
                   selectedConversationId === conversation.id 
-                    ? "bg-blue-600/20 border border-blue-500/30" 
-                    : "hover:bg-zinc-800/50"
+                    ? "bg-primary/10 border border-primary/30" 
+                    : "hover:bg-muted/50"
                 }`}
                 onClick={() => onSelectConversation(conversation)}
               >
                 {/* Profile Picture/Initial */}
                 <div className="relative">
                   <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-zinc-700 text-zinc-200 text-sm font-medium">
+                    <AvatarFallback className="text-sm font-medium">
                       {conversation.type === "group" ? (
                         <Users className="h-6 w-6" />
                       ) : (
@@ -267,7 +267,7 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
                     </AvatarFallback>
                   </Avatar>
                   {conversation.unreadCount! > 0 && (
-                    <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {conversation.unreadCount}
                     </div>
                   )}
@@ -275,16 +275,16 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium text-zinc-200 truncate text-sm">
+                    <h3 className="font-medium text-foreground truncate text-sm">
                       {getConversationName(conversation)}
                     </h3>
                     {conversation.lastMessage && (
-                      <span className="text-xs text-zinc-400 flex-shrink-0 ml-2">
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                         {format(new Date(conversation.lastMessage.sent_at), "MMM d")}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-zinc-400 truncate">
+                  <p className="text-sm text-muted-foreground truncate">
                     {getConversationSubtext(conversation)}
                   </p>
                 </div>

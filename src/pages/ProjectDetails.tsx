@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { ArrowLeft, UserPlus, UserMinus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Navigation from "@/components/Navigation";
+import InviteMemberModal from "@/components/InviteMemberModal";
 
 const ProjectDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +19,7 @@ const ProjectDetails = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery({
@@ -225,13 +228,7 @@ const ProjectDetails = () => {
                 <div className="flex space-x-3 pt-4 border-t border-border">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      // TODO: Implement add member functionality
-                      toast({
-                        title: "Feature coming soon",
-                        description: "Add member functionality will be implemented soon.",
-                      });
-                    }}
+                    onClick={() => setIsInviteModalOpen(true)}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Add Member
@@ -310,6 +307,14 @@ const ProjectDetails = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Invite Member Modal */}
+        <InviteMemberModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          projectId={id!}
+          existingMemberIds={members.map(m => m.user_id)}
+        />
       </div>
     </div>
   );

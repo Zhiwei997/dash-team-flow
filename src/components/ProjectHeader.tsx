@@ -7,6 +7,7 @@ import { useUserProjects, useProjectMembers } from "@/hooks/useProjects";
 import { useState, useEffect } from "react";
 import ProjectSwitcher from "./ProjectSwitcher";
 import ProjectMembersList from "./ProjectMembersList";
+import InviteMemberModal from "./InviteMemberModal";
 
 const ProjectHeader = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ const ProjectHeader = () => {
   const { data: projects = [], isLoading: projectsLoading } = useUserProjects();
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
   const { data: members = [] } = useProjectMembers(selectedProject?.id || null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Set the first project as selected when projects load
   useEffect(() => {
@@ -21,6 +23,10 @@ const ProjectHeader = () => {
       setSelectedProject(projects[0]);
     }
   }, [projects, selectedProject]);
+
+  // Check if current user is project owner
+  const currentUserMember = members.find(m => m.user_id === user?.id);
+  const isOwner = currentUserMember?.role === 'owner';
 
   if (!user) {
     return (
@@ -96,15 +102,32 @@ const ProjectHeader = () => {
             <Settings className="h-4 w-4 mr-2" />
             Manage
           </Button>
-          <Button variant="outline" size="sm" className="bg-card hover:bg-muted">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Invite Members
-          </Button>
+          {isOwner && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-card hover:bg-muted"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Invite Members
+            </Button>
+          )}
         </div>
       </div>
       
       {/* Project Members */}
       <ProjectMembersList members={members} />
+
+      {/* Invite Member Modal */}
+      {selectedProject && (
+        <InviteMemberModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          projectId={selectedProject.id}
+          existingMemberIds={members.map(m => m.user_id)}
+        />
+      )}
     </Card>
   );
 };

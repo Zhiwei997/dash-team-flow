@@ -70,7 +70,11 @@ const NewGroupModal = ({ open, onClose, onGroupCreated }: NewGroupModalProps) =>
   };
 
   const createGroup = async () => {
-    if (!currentUser?.id) return;
+    // Authentication validation
+    if (!currentUser?.id) {
+      toast.error("You must be logged in to create a group");
+      return;
+    }
     if (!groupName.trim()) {
       toast.error("Please enter a group name");
       return;
@@ -80,6 +84,18 @@ const NewGroupModal = ({ open, onClose, onGroupCreated }: NewGroupModalProps) =>
       return;
     }
 
+    // Debug authentication state
+    console.log("Creating group - Current user:", currentUser);
+    console.log("Auth state - User ID:", currentUser.id);
+    
+    // Verify session before proceeding
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      toast.error("Your session has expired. Please log in again.");
+      return;
+    }
+
+    console.log("Session verified - User ID:", session.session.user.id);
     setCreating(true);
 
     // Create new group conversation

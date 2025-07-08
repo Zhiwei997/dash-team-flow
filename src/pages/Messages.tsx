@@ -25,7 +25,30 @@ const Messages = () => {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Authentication guard
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-muted-foreground mb-4">Please log in to access chat</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSelectConversation = async (conversation: Conversation) => {
     // Fetch full conversation details with members

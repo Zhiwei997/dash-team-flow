@@ -51,8 +51,24 @@ const NewChatModal = ({ open, onClose, onChatCreated }: NewChatModalProps) => {
   };
 
   const createPrivateChat = async (userId: string) => {
-    if (!currentUser?.id) return;
+    // Authentication validation
+    if (!currentUser?.id) {
+      toast.error("You must be logged in to create a chat");
+      return;
+    }
 
+    // Debug authentication state
+    console.log("Creating chat - Current user:", currentUser);
+    console.log("Auth state - User ID:", currentUser.id);
+    
+    // Verify session before proceeding
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      toast.error("Your session has expired. Please log in again.");
+      return;
+    }
+
+    console.log("Session verified - User ID:", session.session.user.id);
     setCreating(true);
 
     // Check if conversation already exists

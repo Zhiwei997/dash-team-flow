@@ -13,7 +13,7 @@ const Navigation = () => {
     { name: "Home", path: "/", icon: "🏠" },
     { name: "Lineup", path: "/lineup" },
     { name: "Activity", path: "/activity", icon: "⚡" },
-    { name: "Messages", path: "/messages", icon: "💬" },
+    { name: "Chat", path: "/chat", icon: "💬" },
   ];
 
   const handleNavClick = (path: string) => {

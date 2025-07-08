@@ -7,11 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, UserPlus, UserMinus, Trash2 } from "lucide-react";
+import { ArrowLeft, UserPlus, UserMinus, Trash2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Navigation from "@/components/Navigation";
 import InviteMemberModal from "@/components/InviteMemberModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ProjectDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -128,6 +139,35 @@ const ProjectDetails = () => {
     },
   });
 
+  // Leave project mutation
+  const leaveProjectMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUserMember?.id) throw new Error("User membership not found");
+      
+      const { error } = await supabase
+        .from("project_members")
+        .delete()
+        .eq("id", currentUserMember.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Left project successfully",
+        description: "You have been removed from the project.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["user-projects"] });
+      navigate("/");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error leaving project",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteProject = () => {
     if (window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
       deleteProjectMutation.mutate();
@@ -223,25 +263,57 @@ const ProjectDetails = () => {
                 )}
               </div>
 
-              {/* Action Buttons - Only visible to owners */}
-              {isOwner && (
+              {/* Action Buttons */}
+              {(isOwner || currentUserMember) && (
                 <div className="flex space-x-3 pt-4 border-t border-border">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsInviteModalOpen(true)}
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Add Member
-                  </Button>
+                  {isOwner && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsInviteModalOpen(true)}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add Member
+                      </Button>
+                      
+                      <Button
+                        variant="destructive"
+                        onClick={handleDeleteProject}
+                        disabled={deleteProjectMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {deleteProjectMutation.isPending ? "Deleting..." : "Delete Project"}
+                      </Button>
+                    </>
+                  )}
                   
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteProject}
-                    disabled={deleteProjectMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {deleteProjectMutation.isPending ? "Deleting..." : "Delete Project"}
-                  </Button>
+                  {!isOwner && currentUserMember && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline">
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Leave Project
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Leave Project</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to leave this project? You will lose access to all project data and will need to be re-invited to rejoin.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => leaveProjectMutation.mutate()}
+                            disabled={leaveProjectMutation.isPending}
+                          >
+                            {leaveProjectMutation.isPending ? "Leaving..." : "Leave Project"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               )}
             </div>

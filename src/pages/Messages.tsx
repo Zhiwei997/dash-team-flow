@@ -110,11 +110,11 @@ const Messages = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-zinc-900">
       <Navigation />
       <div className="h-[calc(100vh-73px)] flex">
         {/* Left Panel - Conversation List */}
-        <div className="w-80 border-r border-border">
+        <div className="w-80 border-r border-zinc-700">
           <ConversationList
             onSelectConversation={handleSelectConversation}
             onNewChat={() => setShowNewChatModal(true)}
@@ -131,9 +131,9 @@ const Messages = () => {
               onBack={() => setSelectedConversation(null)}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <h2 className="text-xl font-semibold text-foreground mb-2">Select a conversation</h2>
-              <p className="text-muted-foreground">Choose a contact from the list to start chatting</p>
+            <div className="flex flex-col items-center justify-center h-full text-center bg-zinc-900">
+              <h2 className="text-xl font-semibold text-zinc-200 mb-2">Select a conversation</h2>
+              <p className="text-zinc-400">Choose a contact from the list to start chatting</p>
             </div>
           )}
         </div>

@@ -228,9 +228,9 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       
       // Subtract 1 for the sender themselves
       if (readCount >= totalMembers - 1) {
-        return <Badge variant="secondary" className="text-xs">Read</Badge>;
+        return <span className="text-xs text-green-400 flex items-center">✔️ Read</span>;
       } else {
-        return <Badge variant="outline" className="text-xs">Unread</Badge>;
+        return <span className="text-xs text-yellow-400 flex items-center">⏳ Unread</span>;
       }
     }
     return null;
@@ -251,17 +251,17 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-zinc-900">
       {/* Header */}
-      <div className="border-b border-border p-4 flex items-center justify-between">
+      <div className="border-b border-zinc-700 p-4 bg-zinc-800/50">
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="sm" onClick={onBack}>
+          <Button variant="ghost" size="sm" onClick={onBack} className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700">
             ← Back
           </Button>
           <div>
-            <h2 className="font-semibold text-foreground">{getDisplayName()}</h2>
+            <h2 className="font-semibold text-zinc-200">{getDisplayName()}</h2>
             {conversation.type === "group" && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-zinc-400">
                 {conversation.members?.length} members
               </p>
             )}
@@ -280,20 +280,20 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
               }`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
+                className={`max-w-[70%] rounded-xl p-3 ${
                   message.sender_id === user?.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-800 text-zinc-200"
                 }`}
               >
                 {message.sender_id !== user?.id && conversation.type === "group" && (
-                  <p className="text-xs text-muted-foreground mb-1">
+                  <p className="text-xs text-zinc-400 mb-1 font-medium">
                     {message.sender?.full_name}
                   </p>
                 )}
                 
                 {message.content && (
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 )}
                 
                 {message.file_url && (
@@ -302,29 +302,30 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
                       <img
                         src={message.file_url}
                         alt={message.file_name || "Image"}
-                        className="max-w-full h-auto rounded cursor-pointer"
+                        className="max-w-full h-auto rounded-lg cursor-pointer border border-zinc-600"
                         onClick={() => window.open(message.file_url!, "_blank")}
                       />
                     ) : (
-                      <div className="flex items-center space-x-2 p-2 bg-background/50 rounded">
-                        <FileText className="h-4 w-4" />
-                        <span className="text-sm flex-1">{message.file_name}</span>
+                      <div className="flex items-center space-x-2 p-2 bg-zinc-700/50 rounded-lg border border-zinc-600">
+                        <FileText className="h-4 w-4 text-zinc-300" />
+                        <span className="text-sm flex-1 text-zinc-200">{message.file_name}</span>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => window.open(message.file_url!, "_blank")}
+                          className="h-8 w-8 p-0 hover:bg-zinc-600"
                         >
-                          <Download className="h-4 w-4" />
+                          <Download className="h-4 w-4 text-zinc-300" />
                         </Button>
                       </div>
                     )}
                   </div>
                 )}
                 
-                <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs opacity-70">
+                <div className="flex items-center justify-between mt-2 text-xs">
+                  <span className={`${message.sender_id === user?.id ? 'text-blue-200' : 'text-zinc-500'}`}>
                     {format(new Date(message.sent_at), "HH:mm")}
-                  </p>
+                  </span>
                   {getMessageStatus(message)}
                 </div>
               </div>
@@ -335,8 +336,8 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="border-t border-border p-4">
-        <div className="flex items-center space-x-2">
+      <div className="border-t border-zinc-700 p-4 bg-zinc-800/30">
+        <div className="flex items-end space-x-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -352,22 +353,33 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
+            className="h-10 w-10 p-0 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 rounded-xl"
           >
-            <Paperclip className="h-4 w-4" />
+            <Paperclip className="h-5 w-5" />
           </Button>
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-            disabled={loading || uploading}
-          />
-          <Button onClick={sendMessage} disabled={loading || uploading || !newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <div className="flex-1">
+            <Input
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+              disabled={loading || uploading}
+              className="bg-zinc-800 border-zinc-600 text-zinc-200 placeholder:text-zinc-400 focus:border-blue-500 rounded-xl resize-none min-h-[40px]"
+            />
+          </div>
+          <Button 
+            onClick={sendMessage} 
+            disabled={loading || uploading || !newMessage.trim()}
+            className="h-10 w-10 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
+          >
+            <Send className="h-5 w-5" />
           </Button>
         </div>
         {uploading && (
-          <p className="text-xs text-muted-foreground mt-2">Uploading file...</p>
+          <p className="text-xs text-zinc-400 mt-2 flex items-center">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500 mr-2"></div>
+            Uploading file...
+          </p>
         )}
       </div>
     </div>

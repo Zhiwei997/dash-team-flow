@@ -87,7 +87,12 @@ const ProjectHeader = () => {
         
         {/* Actions */}
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="bg-card hover:bg-muted">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="bg-card hover:bg-muted"
+            onClick={() => navigate(`/project/${selectedProject.id}`)}
+          >
             <Settings className="h-4 w-4 mr-2" />
             Manage
           </Button>

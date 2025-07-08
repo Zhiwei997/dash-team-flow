@@ -113,31 +113,30 @@ const Messages = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="h-[calc(100vh-73px)] flex">
-        {!selectedConversation ? (
-          <div className="flex-1">
-            <ConversationList
-              onSelectConversation={handleSelectConversation}
-              onNewChat={() => setShowNewChatModal(true)}
-              onNewGroup={() => setShowNewGroupModal(true)}
+        {/* Left Panel - Conversation List */}
+        <div className="w-80 border-r border-border">
+          <ConversationList
+            onSelectConversation={handleSelectConversation}
+            onNewChat={() => setShowNewChatModal(true)}
+            onNewGroup={() => setShowNewGroupModal(true)}
+            selectedConversationId={selectedConversation?.id}
+          />
+        </div>
+        
+        {/* Right Panel - Chat Interface or Welcome */}
+        <div className="flex-1">
+          {selectedConversation ? (
+            <ChatInterface
+              conversation={selectedConversation}
+              onBack={() => setSelectedConversation(null)}
             />
-          </div>
-        ) : (
-          <>
-            <div className="w-80 border-r border-border">
-              <ConversationList
-                onSelectConversation={handleSelectConversation}
-                onNewChat={() => setShowNewChatModal(true)}
-                onNewGroup={() => setShowNewGroupModal(true)}
-              />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Select a conversation</h2>
+              <p className="text-muted-foreground">Choose a contact from the list to start chatting</p>
             </div>
-            <div className="flex-1">
-              <ChatInterface
-                conversation={selectedConversation}
-                onBack={() => setSelectedConversation(null)}
-              />
-            </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       <NewChatModal

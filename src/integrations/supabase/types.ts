@@ -266,6 +266,14 @@ export type Database = {
         Args: { project_id: string; user_id: string }
         Returns: boolean
       }
+      user_is_conversation_admin: {
+        Args: { conversation_id: string; user_id: string }
+        Returns: boolean
+      }
+      user_is_conversation_member: {
+        Args: { conversation_id: string; user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

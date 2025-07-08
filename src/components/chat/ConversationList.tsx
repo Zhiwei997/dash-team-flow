@@ -37,9 +37,10 @@ interface ConversationListProps {
   onSelectConversation: (conversation: Conversation) => void;
   onNewChat: () => void;
   onNewGroup: () => void;
+  selectedConversationId?: string;
 }
 
-const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup }: ConversationListProps) => {
+const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selectedConversationId }: ConversationListProps) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -247,7 +248,11 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup }: Conve
             filteredConversations.map((conversation) => (
               <div
                 key={conversation.id}
-                className="flex items-center space-x-3 p-3 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  selectedConversationId === conversation.id 
+                    ? "bg-primary/10 border border-primary/20" 
+                    : "hover:bg-muted"
+                }`}
                 onClick={() => onSelectConversation(conversation)}
               >
                 <Avatar>

@@ -66,7 +66,7 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Title */}
         <h1 className="text-3xl font-bold text-foreground mb-8">
-          {projects.length > 0 ? `${projects[0]?.project_name} Dashboard` : "Dashboard"}
+          Dashboard
         </h1>
         
         {/* Project Header */}

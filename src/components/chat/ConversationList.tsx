@@ -209,6 +209,11 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="p-4 border-b border-border">
+        <h1 className="text-2xl font-bold text-foreground mb-4">Chat</h1>
+      </div>
+      
       {/* Top Controls */}
       <div className="p-4 border-b border-border">
         <div className="flex space-x-2 mb-4">

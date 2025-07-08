@@ -11,12 +11,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Session validation helper
+const validateSession = async () => {
+  const { data: session, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('Session validation error:', error);
+    return null;
+  }
+  return session.session;
+};
+
+// Session refresh helper
+const refreshSession = async () => {
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error) {
+    console.error('Session refresh error:', error);
+    return null;
+  }
+  return data.session;
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  return context;
+  return { ...context, validateSession, refreshSession };
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

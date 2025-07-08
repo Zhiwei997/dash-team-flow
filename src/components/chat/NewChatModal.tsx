@@ -61,14 +61,19 @@ const NewChatModal = ({ open, onClose, onChatCreated }: NewChatModalProps) => {
     console.log("Creating chat - Current user:", currentUser);
     console.log("Auth state - User ID:", currentUser.id);
     
-    // Verify session before proceeding
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) {
-      toast.error("Your session has expired. Please log in again.");
-      return;
+    // Verify and refresh session before proceeding
+    let session = await supabase.auth.getSession();
+    if (!session.data.session) {
+      console.log("No session found, attempting refresh...");
+      const refreshResult = await supabase.auth.refreshSession();
+      if (!refreshResult.data.session) {
+        toast.error("Your session has expired. Please log in again.");
+        return;
+      }
+      session = refreshResult;
     }
 
-    console.log("Session verified - User ID:", session.session.user.id);
+    console.log("Session verified - User ID:", session.data.session.user.id);
     setCreating(true);
 
     // Check if conversation already exists

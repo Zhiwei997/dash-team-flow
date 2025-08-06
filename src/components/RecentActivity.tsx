@@ -34,11 +34,15 @@ const RecentActivity = ({ projectId }: RecentActivityProps) => {
       </div>
       
       <div className="text-sm text-muted-foreground mb-4">
-        Latest actions across this project
+        {projectId ? "Latest actions across this project" : "Select a project to view activity"}
       </div>
       
       <div className="space-y-3">
-        {recentActivities.length === 0 ? (
+        {!projectId ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Please select a project to view recent activity.</p>
+          </div>
+        ) : recentActivities.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground">➤ No recent activity yet.</p>
           </div>
@@ -56,12 +60,14 @@ const RecentActivity = ({ projectId }: RecentActivityProps) => {
         )}
       </div>
       
-      <button 
-        className="text-sm text-nav-link-active hover:text-nav-link-active/80 mt-4"
-        onClick={handleViewAllActivity}
-      >
-        View all activity
-      </button>
+      {projectId && (
+        <button 
+          className="text-sm text-nav-link-active hover:text-nav-link-active/80 mt-4"
+          onClick={handleViewAllActivity}
+        >
+          View all activity
+        </button>
+      )}
     </Card>
   );
 };

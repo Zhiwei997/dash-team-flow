@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useActivityLogs, formatActivityMessage } from "@/hooks/useActivityLogs";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface RecentActivityProps {
   projectId?: string;
@@ -9,10 +10,19 @@ interface RecentActivityProps {
 
 const RecentActivity = ({ projectId }: RecentActivityProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: activityLogs = [] } = useActivityLogs(projectId);
   
   // Get the latest 5 activity logs
   const recentActivities = activityLogs.slice(0, 5);
+
+  const handleViewAllActivity = () => {
+    if (projectId) {
+      navigate(`/activity?project=${projectId}`);
+    } else {
+      navigate('/activity');
+    }
+  };
 
   return (
     <Card className="p-6 bg-card-muted border-0 shadow-sm">
@@ -46,7 +56,10 @@ const RecentActivity = ({ projectId }: RecentActivityProps) => {
         )}
       </div>
       
-      <button className="text-sm text-nav-link-active hover:text-nav-link-active/80 mt-4">
+      <button 
+        className="text-sm text-nav-link-active hover:text-nav-link-active/80 mt-4"
+        onClick={handleViewAllActivity}
+      >
         View all activity
       </button>
     </Card>

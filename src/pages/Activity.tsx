@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { useUserProjects } from "@/hooks/useProjects";
 import { useActivityLogs, formatActivityMessage } from "@/hooks/useActivityLogs";
@@ -16,13 +17,17 @@ import {
 const Activity = () => {
   const { data: projects, isLoading: projectsLoading } = useUserProjects();
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [searchParams] = useSearchParams();
 
-  // Auto-select project if user has only one
+  // Auto-select project from URL parameter or if user has only one
   useEffect(() => {
-    if (projects && projects.length === 1) {
+    const projectFromUrl = searchParams.get('project');
+    if (projectFromUrl && projects?.some(p => p.id === projectFromUrl)) {
+      setSelectedProjectId(projectFromUrl);
+    } else if (projects && projects.length === 1) {
       setSelectedProjectId(projects[0].id);
     }
-  }, [projects]);
+  }, [projects, searchParams]);
 
   const { data: activityLogs, isLoading: logsLoading } = useActivityLogs(selectedProjectId);
 

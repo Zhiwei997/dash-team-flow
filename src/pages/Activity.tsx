@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const Activity = () => {
   const { data: projects, isLoading: projectsLoading } = useUserProjects();
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Auto-select project from URL parameter or default to first project
   useEffect(() => {
@@ -29,11 +29,15 @@ const Activity = () => {
     // Default to first project if no URL parameter or if URL project not found
     if (!selectedProject && projects.length > 0) {
       setSelectedProject(projects[0]);
+      // Update URL to reflect the selected project
+      setSearchParams({ project: projects[0].id });
     }
-  }, [projects, searchParams, selectedProject]);
+  }, [projects, searchParams, selectedProject, setSearchParams]);
 
   const handleProjectSelect = (project: typeof projects[0]) => {
     setSelectedProject(project);
+    // Update URL to reflect the selected project
+    setSearchParams({ project: project.id });
   };
 
   const { data: activityLogs, isLoading: logsLoading } = useActivityLogs(selectedProject?.id);

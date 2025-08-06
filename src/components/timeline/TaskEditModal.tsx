@@ -81,10 +81,16 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
 
   // Update form when task changes
   useEffect(() => {
-    if (task) {
+    if (task && isOpen) {
+      // Ensure assigned_to is valid
+      const validAssignedTo = task.assigned_to && 
+        projectMembers.some(member => member.user_id === task.assigned_to) 
+        ? task.assigned_to 
+        : "";
+
       form.reset({
-        task_name: task.task_name,
-        assigned_to: task.assigned_to || "",
+        task_name: task.task_name || "",
+        assigned_to: validAssignedTo,
         start_date: new Date(task.start_date),
         end_date: new Date(task.end_date),
         module_name: task.module_name || "",
@@ -92,7 +98,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
         progress: task.progress || 0,
       });
     }
-  }, [task, form]);
+  }, [task, isOpen, form, projectMembers]);
 
   const onSubmit = async (values: z.infer<typeof taskFormSchema>) => {
     if (!task) return;
@@ -155,7 +161,11 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assigned To</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || ""}
+                    key={task?.id || "empty"}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select team member" />
@@ -163,11 +173,13 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="">Unassigned</SelectItem>
-                      {projectMembers.map((member) => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          {member.user?.full_name || member.user?.email}
-                        </SelectItem>
-                      ))}
+                      {projectMembers
+                        .filter((member) => member.user_id && member.user?.full_name)
+                        .map((member) => (
+                          <SelectItem key={member.user_id} value={member.user_id}>
+                            {member.user?.full_name || member.user?.email || "Unknown User"}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />

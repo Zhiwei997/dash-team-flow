@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
-import { User, Mail, Phone, MapPin, Building, Flag, Hash, ArrowLeft } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building, Flag, Hash, ArrowLeft, MessageCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,6 +24,7 @@ const UserProfile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -65,6 +66,86 @@ const UserProfile = () => {
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase();
+  };
+
+  const createPrivateChat = async () => {
+    if (!currentUser || !userId) return;
+    
+    setIsCreatingChat(true);
+    try {
+      // Check if a private conversation already exists between these users
+      const { data: existingConversations, error: searchError } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          type,
+          conversation_members!inner(user_id)
+        `)
+        .eq('type', 'private');
+
+      if (searchError) {
+        console.error('Error searching for existing conversations:', searchError);
+        return;
+      }
+
+      // Find a conversation that has exactly these two users
+      const existingConversation = existingConversations?.find(conv => {
+        const memberIds = conv.conversation_members.map(m => m.user_id);
+        return memberIds.length === 2 && 
+               memberIds.includes(currentUser.id) && 
+               memberIds.includes(userId);
+      });
+
+      if (existingConversation) {
+        // Navigate to existing conversation
+        navigate(`/chat?conversation=${existingConversation.id}`);
+        return;
+      }
+
+      // Create new private conversation
+      const { data: conversation, error: conversationError } = await supabase
+        .from('conversations')
+        .insert({
+          name: null,
+          type: 'private',
+          created_by: currentUser.id
+        })
+        .select()
+        .single();
+
+      if (conversationError) {
+        console.error('Error creating conversation:', conversationError);
+        return;
+      }
+
+      // Add both users as members
+      const { error: membersError } = await supabase
+        .from('conversation_members')
+        .insert([
+          {
+            conversation_id: conversation.id,
+            user_id: currentUser.id,
+            role: 'owner'
+          },
+          {
+            conversation_id: conversation.id,
+            user_id: userId,
+            role: 'member'
+          }
+        ]);
+
+      if (membersError) {
+        console.error('Error adding members:', membersError);
+        return;
+      }
+
+      // Navigate to the new conversation
+      navigate(`/chat?conversation=${conversation.id}`);
+    } catch (error) {
+      console.error('Error creating private chat:', error);
+    } finally {
+      setIsCreatingChat(false);
+    }
   };
 
   if (loading) {
@@ -113,11 +194,23 @@ const UserProfile = () => {
               {isOwnProfile ? "My Profile" : `${userData.full_name}'s Profile`}
             </h1>
           </div>
-          {isOwnProfile && (
-            <Button onClick={() => navigate("/profile")} variant="outline">
-              Edit Profile
-            </Button>
-          )}
+          <div className="flex items-center space-x-3">
+            {!isOwnProfile && (
+              <Button 
+                onClick={createPrivateChat} 
+                disabled={isCreatingChat}
+                className="flex items-center space-x-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>{isCreatingChat ? "Creating..." : "Chat Now"}</span>
+              </Button>
+            )}
+            {isOwnProfile && (
+              <Button onClick={() => navigate("/profile")} variant="outline">
+                Edit Profile
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

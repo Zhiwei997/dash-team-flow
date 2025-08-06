@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import ConversationList from "@/components/chat/ConversationList";
 import ChatInterface from "@/components/chat/ChatInterface";
@@ -26,6 +27,59 @@ const Messages = () => {
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
   const { user, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Auto-select conversation from URL parameter
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId && user && !selectedConversation) {
+      // Load the conversation from the URL parameter
+      loadConversationById(conversationId);
+    }
+  }, [searchParams, user, selectedConversation]);
+
+  const loadConversationById = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("conversations")
+        .select("*")
+        .eq("id", conversationId)
+        .single();
+
+      if (error || !data) {
+        console.error("Error fetching conversation:", error);
+        return;
+      }
+
+      // Fetch members separately
+      const { data: membersData } = await supabase
+        .from("conversation_members")
+        .select("user_id, role")
+        .eq("conversation_id", conversationId);
+
+      const membersWithUsers = await Promise.all(
+        (membersData || []).map(async (member) => {
+          const { data: userData } = await supabase
+            .from("users")
+            .select("full_name, email")
+            .eq("id", member.user_id)
+            .single();
+
+          return {
+            ...member,
+            user: userData,
+          };
+        })
+      );
+
+      setSelectedConversation({
+        ...data,
+        members: membersWithUsers,
+      });
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+    }
+  };
 
   // Authentication guard
   if (authLoading) {

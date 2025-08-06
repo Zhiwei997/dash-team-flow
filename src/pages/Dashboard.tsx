@@ -109,8 +109,8 @@ const Dashboard = () => {
         console.log(`Opening Docs & Files for project: ${selectedProject.project_name}`);
         break;
       case "Chat":
-        // Navigate to messages page with project context
-        navigate(`/messages${projectParam}`);
+        // Navigate to chat page with project context
+        navigate(`/chat${projectParam}`);
         break;
       case "Jobs":
         // Navigate to a jobs page with project context (placeholder for now)

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, differenceInDays } from "date-fns";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { Task } from "@/hooks/useTasks";
@@ -16,6 +16,8 @@ interface GroupedTasks {
 const GanttChart = ({ tasks }: GanttChartProps) => {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>();
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
 
   // Calculate date range based on tasks
   useEffect(() => {
@@ -41,6 +43,19 @@ const GanttChart = ({ tasks }: GanttChartProps) => {
       end: endOfWeek(addDays(maxDate, 14))
     });
   }, [tasks]);
+
+  // Synchronize scroll between header and body
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    
+    if (headerScrollRef.current && e.currentTarget !== headerScrollRef.current) {
+      headerScrollRef.current.scrollLeft = scrollLeft;
+    }
+    
+    if (bodyScrollRef.current && e.currentTarget !== bodyScrollRef.current) {
+      bodyScrollRef.current.scrollLeft = scrollLeft;
+    }
+  };
 
   // Group tasks by module
   const groupedTasks: GroupedTasks = tasks.reduce((acc, task) => {
@@ -117,8 +132,12 @@ const GanttChart = ({ tasks }: GanttChartProps) => {
             <span className="text-sm font-medium text-muted-foreground">Progress</span>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <div className="flex min-w-max bg-muted/50">
+        <div 
+          ref={headerScrollRef}
+          className="overflow-x-hidden" 
+          onScroll={handleScroll}
+        >
+          <div className="flex bg-muted/50" style={{ width: `${totalDays * 48}px` }}>
             {days.map((day, index) => (
               <div
                 key={day.toISOString()}
@@ -139,71 +158,80 @@ const GanttChart = ({ tasks }: GanttChartProps) => {
         </div>
       </div>
 
-      {/* Tasks */}
-      <div className="divide-y divide-border">
-        {Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
-          <div key={groupName}>
-            {/* Group Header */}
-            <div className="grid grid-cols-[300px_1fr] hover:bg-muted/50">
-              <div className="p-3 border-r border-border">
-                <button
-                  onClick={() => toggleGroup(groupName)}
-                  className="flex items-center gap-2 text-left w-full"
-                >
-                  {collapsedGroups.has(groupName) ? (
-                    <ChevronRight className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                  <span className="font-semibold text-foreground">{groupName}</span>
-                  <span className="text-xs text-muted-foreground">100%</span>
-                </button>
-              </div>
-              <div className="relative h-12 overflow-x-auto">
-                <div className="absolute inset-0 flex items-center" style={{ width: `${totalDays * 48}px` }}>
-                  {renderGroupProgress(groupTasks)}
-                </div>
-              </div>
-            </div>
-
-            {/* Group Tasks */}
-            {!collapsedGroups.has(groupName) && groupTasks.map((task) => (
-              <div key={task.id} className="grid grid-cols-[300px_1fr] hover:bg-muted/50">
-                <div className="p-3 border-r border-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">
-                        {task.task_name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {task.assignee?.full_name || "Unassigned"}
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground ml-2">
-                      {task.progress}%
-                    </div>
-                  </div>
-                </div>
-                <div className="relative h-12 overflow-x-auto">
-                  <div className="absolute inset-0 flex items-center" style={{ width: `${totalDays * 48}px` }}>
-                    <div
-                      className="absolute h-6 rounded flex items-center"
-                      style={{
-                        ...getTaskPosition(task),
-                        backgroundColor: task.color,
-                      }}
+      {/* Tasks Container */}
+      <div className="relative">
+        {/* Tasks Body */}
+        <div 
+          ref={bodyScrollRef}
+          className="overflow-x-auto divide-y divide-border"
+          onScroll={handleScroll}
+        >
+          <div style={{ width: `${300 + totalDays * 48}px` }}>
+            {Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
+              <div key={groupName}>
+                {/* Group Header */}
+                <div className="grid grid-cols-[300px_1fr] hover:bg-muted/50">
+                  <div className="p-3 border-r border-border">
+                    <button
+                      onClick={() => toggleGroup(groupName)}
+                      className="flex items-center gap-2 text-left w-full"
                     >
-                      <div className="flex items-center justify-between w-full px-2 text-xs text-white">
-                        <span className="truncate">{task.assignee?.full_name || task.task_name}</span>
-                      </div>
-                      <div className="absolute bottom-0 left-0 h-1 bg-white/30 rounded-b" style={{ width: `${task.progress}%` }} />
+                      {collapsedGroups.has(groupName) ? (
+                        <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      <span className="font-semibold text-foreground">{groupName}</span>
+                      <span className="text-xs text-muted-foreground">100%</span>
+                    </button>
+                  </div>
+                  <div className="relative h-12">
+                    <div className="absolute inset-0 flex items-center" style={{ width: `${totalDays * 48}px` }}>
+                      {renderGroupProgress(groupTasks)}
                     </div>
                   </div>
                 </div>
+
+                {/* Group Tasks */}
+                {!collapsedGroups.has(groupName) && groupTasks.map((task) => (
+                  <div key={task.id} className="grid grid-cols-[300px_1fr] hover:bg-muted/50">
+                    <div className="p-3 border-r border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-foreground truncate">
+                            {task.task_name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {task.assignee?.full_name || "Unassigned"}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground ml-2">
+                          {task.progress}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative h-12">
+                      <div className="absolute inset-0 flex items-center" style={{ width: `${totalDays * 48}px` }}>
+                        <div
+                          className="absolute h-6 rounded flex items-center"
+                          style={{
+                            ...getTaskPosition(task),
+                            backgroundColor: task.color,
+                          }}
+                        >
+                          <div className="flex items-center justify-between w-full px-2 text-xs text-white">
+                            <span className="truncate">{task.assignee?.full_name || task.task_name}</span>
+                          </div>
+                          <div className="absolute bottom-0 left-0 h-1 bg-white/30 rounded-b" style={{ width: `${task.progress}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
-        ))}
+        </div>
       </div>
 
       {tasks.length === 0 && (

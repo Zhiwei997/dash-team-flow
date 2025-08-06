@@ -141,16 +141,18 @@ const Lineup = () => {
           </div>
         )}
 
-        {/* Timeline */}
+        {/* Timeline with proper spacing */}
         {selectedProject && (
-          <div className="space-y-6">
-            {tasksLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-muted-foreground">Loading timeline...</div>
-              </div>
-            ) : (
-              <GanttChart tasks={tasks} projectMembers={projectMembers} />
-            )}
+          <div className="px-10">
+            <div className="bg-background rounded-lg">
+              {tasksLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-muted-foreground">Loading timeline...</div>
+                </div>
+              ) : (
+                <GanttChart tasks={tasks} projectMembers={projectMembers} />
+              )}
+            </div>
           </div>
         )}
       </div>

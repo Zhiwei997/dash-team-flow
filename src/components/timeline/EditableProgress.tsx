@@ -25,12 +25,15 @@ const EditableProgress = ({ value, onSave, className }: EditableProgressProps) =
 
   const handleSave = () => {
     const numValue = Math.max(0, Math.min(100, parseInt(editValue) || 0));
-    onSave(numValue);
+    if (numValue !== value) {
+      onSave(numValue);
+    }
     setIsEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       handleSave();
     } else if (e.key === "Escape") {
       setEditValue(value.toString());
@@ -54,7 +57,7 @@ const EditableProgress = ({ value, onSave, className }: EditableProgressProps) =
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         className={cn(
-          "w-12 h-6 text-xs bg-background border border-border rounded px-1 text-center",
+          "w-14 h-7 text-xs bg-background border border-primary rounded px-2 text-center focus:outline-none focus:ring-2 focus:ring-primary/20",
           className
         )}
       />
@@ -65,7 +68,7 @@ const EditableProgress = ({ value, onSave, className }: EditableProgressProps) =
     <button
       onClick={() => setIsEditing(true)}
       className={cn(
-        "text-xs hover:bg-muted rounded px-1 transition-colors min-w-[2rem] text-center",
+        "text-xs hover:bg-muted/60 rounded px-2 py-1 transition-colors min-w-[3rem] text-center border border-transparent hover:border-border",
         className
       )}
     >

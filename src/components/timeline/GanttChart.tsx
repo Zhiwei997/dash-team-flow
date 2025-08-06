@@ -404,14 +404,19 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
                                 left: `${left}%`,
                                 width: `${width}%`,
                                 backgroundColor: task.color,
+                                opacity: 0.7,
                               }}
                               onMouseDown={(e) => handleTaskMouseDown(e, task)}
                               onDoubleClick={() => setEditingTask(task)}
                             >
-                              {/* Progress overlay */}
+                              {/* Progress overlay - completed portion (darker) */}
                               <div 
-                                className="absolute inset-0 bg-white/20 rounded-md transition-all"
-                                style={{ width: `${task.progress}%` }}
+                                className="absolute inset-0 rounded-md transition-all"
+                                style={{ 
+                                  width: `${task.progress}%`,
+                                  backgroundColor: task.color,
+                                  opacity: 1,
+                                }}
                               />
                               
                               {/* Task content */}
@@ -420,7 +425,7 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
                                   {width > 15 ? task.task_name : task.assignee?.full_name?.charAt(0) || "T"}
                                 </span>
                                 {width > 20 && (
-                                  <span className="ml-1 text-white/80">{task.progress}%</span>
+                                  <span className="ml-1 text-white/90 drop-shadow-sm">{task.progress}%</span>
                                 )}
                               </div>
                               

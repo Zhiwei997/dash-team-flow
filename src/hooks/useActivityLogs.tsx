@@ -53,6 +53,20 @@ export const formatActivityMessage = (log: ActivityLog): string => {
   const userName = log.user?.full_name || "Unknown User";
   
   switch (log.action) {
+    case "project_created":
+      const projectName = log.details?.project_name;
+      return `${userName} created project "${projectName}"`;
+    
+    case "member_added":
+      const invitedUserName = log.details?.invited_user_name;
+      const role = log.details?.role;
+      return `${userName} invited ${invitedUserName} as ${role}`;
+    
+    case "member_removed":
+      const removedUserName = log.details?.removed_user_name;
+      const removedRole = log.details?.role;
+      return `${userName} removed ${removedUserName} (${removedRole})`;
+    
     case "task_created":
       const taskName = log.details?.task_name;
       const moduleName = log.details?.module_name;

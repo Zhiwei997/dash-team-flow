@@ -107,7 +107,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
               id="moduleName"
               value={moduleName}
               onChange={(e) => setModuleName(e.target.value)}
-              placeholder="e.g., TradeConnect, Project Management Tool"
+              placeholder="e.g., RestoreAI"
             />
           </div>
 

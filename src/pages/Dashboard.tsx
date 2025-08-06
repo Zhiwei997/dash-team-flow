@@ -6,11 +6,20 @@ import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useUserProjects } from "@/hooks/useProjects";
+import { useState, useEffect } from "react";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: projects = [] } = useUserProjects();
+  const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
+
+  // Set the first project as selected when projects load
+  useEffect(() => {
+    if (projects.length > 0 && !selectedProject) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects, selectedProject]);
 
   const features = [
     {
@@ -108,7 +117,7 @@ const Dashboard = () => {
         
         {/* Recent Activity */}
         <div>
-          <RecentActivity />
+          <RecentActivity projectId={selectedProject?.id} />
         </div>
       </div>
     </div>

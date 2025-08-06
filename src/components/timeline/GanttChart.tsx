@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, differenceInDays } from "date-fns";
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, differenceInDays, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { Task, useUpdateTask } from "@/hooks/useTasks";
 import { ProjectMember } from "@/hooks/useProjects";
@@ -123,45 +123,21 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
   const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
   const totalDays = days.length;
 
-  const getTaskPosition = (task: Task) => {
-    const taskStart = new Date(task.start_date);
-    const taskEnd = new Date(task.end_date);
+  // Generate months for header
+  const months = eachMonthOfInterval({ start: dateRange.start, end: dateRange.end });
+  const monthSpans = months.map(month => {
+    const monthStart = month > dateRange.start ? month : dateRange.start;
+    const monthEnd = endOfMonth(month) < dateRange.end ? endOfMonth(month) : dateRange.end;
+    const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd }).length;
+    const startOffset = differenceInDays(monthStart, dateRange.start);
     
-    const startOffset = differenceInDays(taskStart, dateRange!.start);
-    const duration = differenceInDays(taskEnd, taskStart) + 1;
-    
-    const left = Math.max(0, (startOffset / totalDays) * 100);
-    const width = Math.min(100 - left, (duration / totalDays) * 100);
-    
-    return { left: `${left}%`, width: `${width}%` };
-  };
-
-  const renderGroupProgress = (groupTasks: Task[]) => {
-    const totalProgress = groupTasks.reduce((sum, task) => sum + task.progress, 0);
-    const avgProgress = groupTasks.length > 0 ? Math.round(totalProgress / groupTasks.length) : 0;
-    
-    if (groupTasks.length === 0) return null;
-
-    const earliestStart = new Date(Math.min(...groupTasks.map(t => new Date(t.start_date).getTime())));
-    const latestEnd = new Date(Math.max(...groupTasks.map(t => new Date(t.end_date).getTime())));
-    
-    const position = getTaskPosition({
-      start_date: format(earliestStart, "yyyy-MM-dd"),
-      end_date: format(latestEnd, "yyyy-MM-dd"),
-    } as Task);
-
-    return (
-      <div
-        className="absolute h-6 bg-muted border border-border rounded"
-        style={position}
-      >
-        <div className="flex items-center justify-between h-full px-2 text-xs">
-          <span className="text-muted-foreground font-medium">100%</span>
-          <span className="text-muted-foreground">{avgProgress}%</span>
-        </div>
-      </div>
-    );
-  };
+    return {
+      month,
+      name: format(month, "MMMM yyyy"),
+      daysCount: daysInMonth,
+      startOffset,
+    };
+  });
 
   return (
     <>
@@ -180,23 +156,41 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
             className="overflow-x-hidden" 
             onScroll={handleScroll}
           >
-            <div className="flex bg-muted/50 min-w-max">
-              {days.map((day, index) => (
-                <div
-                  key={day.toISOString()}
-                  className={cn(
-                    "flex-shrink-0 w-12 p-2 text-center border-r border-border last:border-r-0",
-                    index % 7 === 0 || index % 7 === 6 ? "bg-muted/70" : ""
-                  )}
-                >
-                  <div className="text-xs text-muted-foreground">
-                    {format(day, "EEE")}
+            <div className="bg-muted/50 min-w-max">
+              {/* Month Header Row */}
+              <div className="flex border-b border-border/50">
+                {monthSpans.map((monthSpan) => (
+                  <div
+                    key={monthSpan.month.toISOString()}
+                    className="flex-shrink-0 p-2 text-center border-r border-border/30 last:border-r-0 bg-muted/30"
+                    style={{ width: `${monthSpan.daysCount * 48}px` }}
+                  >
+                    <div className="text-sm font-semibold text-foreground">
+                      {monthSpan.name}
+                    </div>
                   </div>
-                  <div className="text-xs font-medium">
-                    {format(day, "dd")}
+                ))}
+              </div>
+              
+              {/* Day Header Row */}
+              <div className="flex">
+                {days.map((day, index) => (
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      "flex-shrink-0 w-12 p-2 text-center border-r border-border last:border-r-0",
+                      index % 7 === 0 || index % 7 === 6 ? "bg-muted/70" : ""
+                    )}
+                  >
+                    <div className="text-xs text-muted-foreground">
+                      {format(day, "EEE")}
+                    </div>
+                    <div className="text-xs font-medium">
+                      {format(day, "dd")}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -208,22 +202,19 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
             {/* Left Panel - Task Info (Sticky) */}
             <div className="bg-background border-r border-border divide-y divide-border max-h-[600px] overflow-y-auto">
               {Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
-                <div key={groupName}>
-                  {/* Group Header */}
-                  <div className="p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
-                    <button
-                      onClick={() => toggleGroup(groupName)}
-                      className="flex items-center gap-2 text-left w-full"
-                    >
-                      {collapsedGroups.has(groupName) ? (
-                        <ChevronRight className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                      <span className="font-semibold text-foreground">{groupName}</span>
-                      <span className="text-xs text-muted-foreground ml-auto">
-                        {Math.round(groupTasks.reduce((sum, task) => sum + task.progress, 0) / groupTasks.length)}%
-                      </span>
+                  <div key={groupName}>
+                    {/* Group Header */}
+                    <div className="p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <button
+                        onClick={() => toggleGroup(groupName)}
+                        className="flex items-center gap-2 text-left w-full"
+                      >
+                        {collapsedGroups.has(groupName) ? (
+                          <ChevronRight className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                        <span className="font-semibold text-foreground">{groupName}</span>
                     </button>
                   </div>
 
@@ -268,11 +259,9 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
               >
                 {Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
                   <div key={groupName}>
-                    {/* Group Timeline */}
-                    <div className="relative h-12 bg-muted/20">
-                      <div className="absolute inset-0 flex items-center">
-                        {renderGroupProgress(groupTasks)}
-                      </div>
+                    {/* Group Timeline - Empty placeholder for alignment */}
+                    <div className="relative h-12 bg-muted/10">
+                      {/* No progress bar - just placeholder for group alignment */}
                     </div>
 
                     {/* Task Timelines */}

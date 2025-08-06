@@ -4,55 +4,76 @@ import FeatureCard from "@/components/FeatureCard";
 import RecentActivity from "@/components/RecentActivity";
 import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUserProjects } from "@/hooks/useProjects";
 import { useState, useEffect } from "react";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: projects = [] } = useUserProjects();
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
 
-  // Set the first project as selected when projects load
+  // Set project from URL parameter or default to first project
   useEffect(() => {
-    if (projects.length > 0 && !selectedProject) {
-      setSelectedProject(projects[0]);
+    if (!projects || projects.length === 0) return;
+    
+    const projectFromUrl = searchParams.get('project');
+    if (projectFromUrl) {
+      const urlProject = projects.find(p => p.id === projectFromUrl);
+      if (urlProject) {
+        setSelectedProject(urlProject);
+        return;
+      }
     }
-  }, [projects, selectedProject]);
+    
+    // Default to first project if no URL parameter or if URL project not found
+    if (!selectedProject && projects.length > 0) {
+      setSelectedProject(projects[0]);
+      // Update URL to reflect the selected project
+      setSearchParams({ project: projects[0].id });
+    }
+  }, [projects, searchParams, selectedProject, setSearchParams]);
+
+  // Update URL when project selection changes
+  const handleProjectChange = (project: typeof projects[0]) => {
+    setSelectedProject(project);
+    setSearchParams({ project: project.id });
+  };
 
   const features = [
     {
       title: "Message Board",
-      description: "Post announcements, pitch ideas, and keep discussions on-topic.",
+      description: `Post announcements and keep discussions organized for ${selectedProject?.project_name || 'this project'}.`,
       buttonText: "Write a message",
       iconBg: "bg-feature-message",
       icon: <MessageCircle className="h-8 w-8" />
     },
     {
       title: "To-dos",
-      description: "Organize work across teams. Assign tasks, set due dates, and discuss.",
+      description: `Organize work and assign tasks for ${selectedProject?.project_name || 'this project'}.`,
       buttonText: "Make a to-do list",
       iconBg: "bg-feature-todos",
       icon: <CheckCircle className="h-8 w-8" />
     },
     {
       title: "Docs & Files",
-      description: "Share and organize docs, spreadsheets, images, and other files.",
+      description: `Share documents and files for ${selectedProject?.project_name || 'this project'}.`,
       buttonText: "Add docs & files",
       iconBg: "bg-feature-docs",
       icon: <FileText className="h-8 w-8" />
     },
     {
       title: "Chat",
-      description: "Chat casually with your team, ask questions, and share news without ceremony.",
+      description: `Chat with team members working on ${selectedProject?.project_name || 'this project'}.`,
       buttonText: "Start chatting",
       iconBg: "bg-feature-chat",
       icon: <MessageSquare className="h-8 w-8" />
     },
     {
       title: "Jobs",
-      description: "Track and manage important jobs and assignments for your team.",
+      description: `Track jobs and assignments for ${selectedProject?.project_name || 'this project'}.`,
       buttonText: "Create a job",
       iconBg: "bg-feature-jobs",
       icon: <Briefcase className="h-8 w-8" />
@@ -64,8 +85,38 @@ const Dashboard = () => {
       navigate("/login");
       return;
     }
-    console.log(`Clicked on ${featureTitle}`);
-    // This is where you would navigate to the specific feature page
+    
+    if (!selectedProject) {
+      console.warn("No project selected");
+      return;
+    }
+
+    const projectParam = `?project=${selectedProject.id}`;
+    
+    switch (featureTitle) {
+      case "Message Board":
+        // Navigate to messages page with project context
+        navigate(`/messages${projectParam}`);
+        break;
+      case "To-dos":
+        // Navigate to lineup/tasks page with project context
+        navigate(`/lineup${projectParam}`);
+        break;
+      case "Docs & Files":
+        // Navigate to a files page with project context (placeholder for now)
+        console.log(`Opening Docs & Files for project: ${selectedProject.project_name}`);
+        break;
+      case "Chat":
+        // Navigate to messages page with project context
+        navigate(`/messages${projectParam}`);
+        break;
+      case "Jobs":
+        // Navigate to a jobs page with project context (placeholder for now)
+        console.log(`Opening Jobs for project: ${selectedProject.project_name}`);
+        break;
+      default:
+        console.log(`Clicked on ${featureTitle} for project: ${selectedProject.project_name}`);
+    }
   };
 
   return (

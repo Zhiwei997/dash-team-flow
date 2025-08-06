@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTaskModal from "@/components/timeline/AddTaskModal";
@@ -13,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 const Lineup = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const { 
@@ -30,17 +32,31 @@ const Lineup = () => {
     isLoading: tasksLoading 
   } = useProjectTasks(selectedProjectId);
 
-  // Auto-select first project when projects load
+  // Set project from URL parameter or default to first project
   useEffect(() => {
-    if (projects.length > 0 && !selectedProjectId) {
-      setSelectedProjectId(projects[0].id);
+    if (!projects || projects.length === 0) return;
+    
+    const projectFromUrl = searchParams.get('project');
+    if (projectFromUrl) {
+      const urlProject = projects.find(p => p.id === projectFromUrl);
+      if (urlProject) {
+        setSelectedProjectId(urlProject.id);
+        return;
+      }
     }
-  }, [projects, selectedProjectId]);
+    
+    // Default to first project if no URL parameter
+    if (!selectedProjectId && projects.length > 0) {
+      setSelectedProjectId(projects[0].id);
+      setSearchParams({ project: projects[0].id });
+    }
+  }, [projects, searchParams, selectedProjectId, setSearchParams]);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
   const handleProjectSelect = (project: typeof projects[0]) => {
     setSelectedProjectId(project.id);
+    setSearchParams({ project: project.id });
   };
 
   if (authLoading) {

@@ -53,7 +53,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
     await createTaskMutation.mutateAsync({
       project_id: projectId,
       task_name: taskName,
-      assigned_to: assignedTo || null,
+      assigned_to: assignedTo === "unassigned" ? null : assignedTo || null,
       start_date: format(startDate, "yyyy-MM-dd"),
       end_date: format(endDate, "yyyy-MM-dd"),
       module_name: moduleName || null,
@@ -118,7 +118,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
                 <SelectValue placeholder="Select team member" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No assignment</SelectItem>
+                <SelectItem value="unassigned">No assignment</SelectItem>
                 {projectMembers.map((member) => (
                   <SelectItem key={member.user_id} value={member.user_id}>
                     <div className="flex items-center gap-2">

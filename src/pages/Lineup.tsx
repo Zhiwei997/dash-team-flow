@@ -112,10 +112,12 @@ const Lineup = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="max-w-full mx-auto px-6 py-8">
+        {/* Title */}
+        <h1 className="text-3xl font-bold text-foreground mb-8">Lineup</h1>
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-foreground">Lineup</h1>
             {selectedProject && (
               <ProjectSwitcher
                 projects={projects}

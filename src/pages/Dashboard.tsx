@@ -2,6 +2,7 @@ import Navigation from "@/components/Navigation";
 import ProjectHeader from "@/components/ProjectHeader";
 import FeatureCard from "@/components/FeatureCard";
 import RecentActivity from "@/components/RecentActivity";
+import MessageBoardModal from "@/components/MessageBoardModal";
 import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -14,6 +15,7 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: projects = [] } = useUserProjects();
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
+  const [isMessageBoardOpen, setIsMessageBoardOpen] = useState(false);
 
   // Set project from URL parameter or default to first project
   useEffect(() => {
@@ -95,8 +97,8 @@ const Dashboard = () => {
     
     switch (featureTitle) {
       case "Message Board":
-        // Navigate to messages page with project context
-        navigate(`/messages${projectParam}`);
+        // Open the Message Board modal
+        setIsMessageBoardOpen(true);
         break;
       case "To-dos":
         // Navigate to lineup/tasks page with project context
@@ -171,6 +173,14 @@ const Dashboard = () => {
           <RecentActivity projectId={selectedProject?.id} />
         </div>
       </div>
+
+      {/* Message Board Modal */}
+      <MessageBoardModal
+        open={isMessageBoardOpen}
+        onOpenChange={setIsMessageBoardOpen}
+        projectId={selectedProject?.id || null}
+        projectName={selectedProject?.project_name}
+      />
     </div>
   );
 };

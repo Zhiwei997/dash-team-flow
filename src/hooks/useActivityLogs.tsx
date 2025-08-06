@@ -89,6 +89,10 @@ export const formatActivityMessage = (log: ActivityLog): string => {
       const deletedTaskName = log.details?.task_name;
       return `${userName} deleted task "${deletedTaskName}"`;
     
+    case "message_sent":
+      const messageContent = log.details?.content;
+      return `${userName} sent a new message${messageContent ? `: "${messageContent}"` : ""}`;
+    
     default:
       return `${userName} performed action: ${log.action}`;
   }

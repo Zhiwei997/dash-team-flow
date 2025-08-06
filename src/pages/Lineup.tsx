@@ -111,7 +111,7 @@ const Lineup = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="max-w-full mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Title */}
         <h1 className="text-3xl font-bold text-foreground mb-8">Lineup</h1>
         
@@ -141,18 +141,16 @@ const Lineup = () => {
           </div>
         )}
 
-        {/* Timeline with proper spacing */}
+        {/* Timeline */}
         {selectedProject && (
-          <div className="px-10">
-            <div className="bg-background rounded-lg">
-              {tasksLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-muted-foreground">Loading timeline...</div>
-                </div>
-              ) : (
-                <GanttChart tasks={tasks} projectMembers={projectMembers} />
-              )}
-            </div>
+          <div className="space-y-6">
+            {tasksLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-muted-foreground">Loading timeline...</div>
+              </div>
+            ) : (
+              <GanttChart tasks={tasks} projectMembers={projectMembers} />
+            )}
           </div>
         )}
       </div>

@@ -70,7 +70,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       task_name: "",
-      assigned_to: "",
+      assigned_to: "unassigned",
       start_date: new Date(),
       end_date: new Date(),
       module_name: "",
@@ -82,15 +82,15 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
   // Update form when task changes
   useEffect(() => {
     if (task && isOpen) {
-      // Ensure assigned_to is valid
-      const validAssignedTo = task.assigned_to && 
+      // Handle assigned_to: convert null/empty to "unassigned" for the Select component
+      const assignedValue = task.assigned_to && 
         projectMembers.some(member => member.user_id === task.assigned_to) 
         ? task.assigned_to 
-        : "";
+        : "unassigned";
 
       form.reset({
         task_name: task.task_name || "",
-        assigned_to: validAssignedTo,
+        assigned_to: assignedValue,
         start_date: new Date(task.start_date),
         end_date: new Date(task.end_date),
         module_name: task.module_name || "",
@@ -109,7 +109,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
         project_id: task.project_id,
         updates: {
           task_name: values.task_name,
-          assigned_to: values.assigned_to || null,
+          assigned_to: values.assigned_to === "unassigned" ? null : values.assigned_to,
           start_date: format(values.start_date, "yyyy-MM-dd"),
           end_date: format(values.end_date, "yyyy-MM-dd"),
           module_name: values.module_name || null,
@@ -163,7 +163,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
                   <FormLabel>Assigned To</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value || ""}
+                    value={field.value || "unassigned"}
                     key={task?.id || "empty"}
                   >
                     <FormControl>
@@ -172,7 +172,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {projectMembers
                         .filter((member) => member.user_id && member.user?.full_name)
                         .map((member) => (

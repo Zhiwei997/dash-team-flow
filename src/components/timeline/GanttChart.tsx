@@ -20,8 +20,6 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [draggedTask, setDraggedTask] = useState<{ task: Task; startX: number; initialLeft: number; initialWidth: number } | null>(null);
-  const [resizingTask, setResizingTask] = useState<{ task: Task; handle: 'start' | 'end'; startX: number; initialLeft: number; initialWidth: number } | null>(null);
   
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -87,22 +85,6 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
     setCollapsedGroups(newCollapsed);
   };
 
-  // Task progress update handler
-  const handleProgressUpdate = useCallback(async (taskId: string, progress: number) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    try {
-      await updateTaskMutation.mutateAsync({
-        id: taskId,
-        project_id: task.project_id,
-        updates: { progress },
-      });
-    } catch (error) {
-      console.error("Failed to update progress:", error);
-    }
-  }, [tasks, updateTaskMutation]);
-
   // Task bar position calculation
   const getTaskBarPosition = useCallback((task: Task) => {
     if (!dateRange) return { left: 0, width: 0 };
@@ -120,115 +102,21 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
     return { left, width };
   }, [dateRange]);
 
-  // Drag and drop handlers
-  const handleTaskMouseDown = useCallback((e: React.MouseEvent, task: Task) => {
-    if (!timelineRef.current || !dateRange) return;
-    
-    e.preventDefault();
-    const rect = timelineRef.current.getBoundingClientRect();
-    const { left, width } = getTaskBarPosition(task);
-    
-    setDraggedTask({
-      task,
-      startX: e.clientX,
-      initialLeft: left,
-      initialWidth: width,
-    });
-  }, [dateRange, getTaskBarPosition]);
+  // Task progress update handler
+  const handleProgressUpdate = useCallback(async (taskId: string, progress: number) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
 
-  const handleTaskResizeMouseDown = useCallback((e: React.MouseEvent, task: Task, handle: 'start' | 'end') => {
-    if (!timelineRef.current || !dateRange) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = timelineRef.current.getBoundingClientRect();
-    const { left, width } = getTaskBarPosition(task);
-    
-    setResizingTask({
-      task,
-      handle,
-      startX: e.clientX,
-      initialLeft: left,
-      initialWidth: width,
-    });
-  }, [dateRange, getTaskBarPosition]);
-
-  // Mouse move handler for drag/resize
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!timelineRef.current || !dateRange) return;
-      
-      const rect = timelineRef.current.getBoundingClientRect();
-      const totalDays = differenceInDays(dateRange.end, dateRange.start) + 1;
-      const dayWidth = rect.width / totalDays;
-      
-      if (draggedTask) {
-        const deltaX = e.clientX - draggedTask.startX;
-        const deltaDays = Math.round(deltaX / dayWidth);
-        
-        const newStartDate = addDays(new Date(draggedTask.task.start_date), deltaDays);
-        const newEndDate = addDays(new Date(draggedTask.task.end_date), deltaDays);
-        
-        // Update task dates
-        updateTaskMutation.mutate({
-          id: draggedTask.task.id,
-          project_id: draggedTask.task.project_id,
-          updates: {
-            start_date: format(newStartDate, "yyyy-MM-dd"),
-            end_date: format(newEndDate, "yyyy-MM-dd"),
-          },
-        });
-      }
-      
-      if (resizingTask) {
-        const deltaX = e.clientX - resizingTask.startX;
-        const deltaDays = Math.round(deltaX / dayWidth);
-        
-        if (resizingTask.handle === 'start') {
-          const newStartDate = addDays(new Date(resizingTask.task.start_date), deltaDays);
-          const endDate = new Date(resizingTask.task.end_date);
-          
-          if (newStartDate <= endDate) {
-            updateTaskMutation.mutate({
-              id: resizingTask.task.id,
-              project_id: resizingTask.task.project_id,
-              updates: {
-                start_date: format(newStartDate, "yyyy-MM-dd"),
-              },
-            });
-          }
-        } else {
-          const startDate = new Date(resizingTask.task.start_date);
-          const newEndDate = addDays(new Date(resizingTask.task.end_date), deltaDays);
-          
-          if (newEndDate >= startDate) {
-            updateTaskMutation.mutate({
-              id: resizingTask.task.id,
-              project_id: resizingTask.task.project_id,
-              updates: {
-                end_date: format(newEndDate, "yyyy-MM-dd"),
-              },
-            });
-          }
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      setDraggedTask(null);
-      setResizingTask(null);
-    };
-
-    if (draggedTask || resizingTask) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-      };
+    try {
+      await updateTaskMutation.mutateAsync({
+        id: taskId,
+        project_id: task.project_id,
+        updates: { progress },
+      });
+    } catch (error) {
+      console.error("Failed to update progress:", error);
     }
-  }, [draggedTask, resizingTask, dateRange, updateTaskMutation]);
+  }, [tasks, updateTaskMutation]);
 
   if (!dateRange) return null;
 
@@ -396,9 +284,7 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
                           <div className="absolute inset-0 flex items-center">
                             <div
                               className={cn(
-                                "absolute h-6 rounded-md cursor-pointer group transition-all hover:h-7 hover:shadow-lg",
-                                draggedTask?.task.id === task.id && "opacity-50",
-                                resizingTask?.task.id === task.id && "ring-2 ring-primary"
+                                "absolute h-6 rounded-md cursor-pointer group transition-all hover:h-7 hover:shadow-lg"
                               )}
                               style={{
                                 left: `${left}%`,
@@ -406,7 +292,6 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
                                 backgroundColor: task.color,
                                 opacity: 0.7,
                               }}
-                              onMouseDown={(e) => handleTaskMouseDown(e, task)}
                               onDoubleClick={() => setEditingTask(task)}
                             >
                               {/* Progress overlay - completed portion (darker) */}
@@ -428,16 +313,6 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
                                   <span className="ml-1 text-white/90 drop-shadow-sm">{task.progress}%</span>
                                 )}
                               </div>
-                              
-                              {/* Resize handles */}
-                              <div
-                                className="absolute left-0 top-0 w-2 h-full cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-l-md transition-opacity"
-                                onMouseDown={(e) => handleTaskResizeMouseDown(e, task, 'start')}
-                              />
-                              <div
-                                className="absolute right-0 top-0 w-2 h-full cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/30 rounded-r-md transition-opacity"
-                                onMouseDown={(e) => handleTaskResizeMouseDown(e, task, 'end')}
-                              />
                             </div>
                           </div>
                         </div>

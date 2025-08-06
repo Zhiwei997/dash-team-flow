@@ -20,6 +20,7 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>();
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [hasAutoScrolled, setHasAutoScrolled] = useState(false);
   
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
@@ -118,10 +119,35 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
     }
   }, [tasks, updateTaskMutation]);
 
+  // Auto-scroll to center today's date on first load
+  useEffect(() => {
+    if (!dateRange || !bodyScrollRef.current || hasAutoScrolled) return;
+    
+    const today = new Date();
+    const todayIndex = days.findIndex(day => 
+      format(day, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")
+    );
+    
+    if (todayIndex !== -1) {
+      const dayWidth = 48; // 48px per day
+      const containerWidth = bodyScrollRef.current.clientWidth;
+      const scrollPosition = (todayIndex * dayWidth) - (containerWidth / 2) + (dayWidth / 2);
+      
+      bodyScrollRef.current.scrollLeft = Math.max(0, scrollPosition);
+      if (headerScrollRef.current) {
+        headerScrollRef.current.scrollLeft = Math.max(0, scrollPosition);
+      }
+      
+      setHasAutoScrolled(true);
+    }
+  }, [dateRange, hasAutoScrolled]);
+
   if (!dateRange) return null;
 
   const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
   const totalDays = days.length;
+  const today = new Date();
+  const todayString = format(today, "yyyy-MM-dd");
 
   // Generate months for header
   const months = eachMonthOfInterval({ start: dateRange.start, end: dateRange.end });
@@ -178,16 +204,26 @@ const GanttChart = ({ tasks, projectMembers = [] }: GanttChartProps) => {
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      "flex-shrink-0 w-12 p-2 text-center border-r border-border last:border-r-0",
-                      index % 7 === 0 || index % 7 === 6 ? "bg-muted/70" : ""
+                      "flex-shrink-0 w-12 p-2 text-center border-r border-border last:border-r-0 relative",
+                      index % 7 === 0 || index % 7 === 6 ? "bg-muted/70" : "",
+                      format(day, "yyyy-MM-dd") === todayString ? "bg-blue-500/10 border-blue-500/30" : ""
                     )}
                   >
-                    <div className="text-xs text-muted-foreground">
+                    <div className={cn(
+                      "text-xs",
+                      format(day, "yyyy-MM-dd") === todayString ? "text-blue-600 font-medium" : "text-muted-foreground"
+                    )}>
                       {format(day, "EEE")}
                     </div>
-                    <div className="text-xs font-medium">
+                    <div className={cn(
+                      "text-xs font-medium",
+                      format(day, "yyyy-MM-dd") === todayString ? "text-blue-600" : ""
+                    )}>
                       {format(day, "dd")}
                     </div>
+                    {format(day, "yyyy-MM-dd") === todayString && (
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full"></div>
+                    )}
                   </div>
                 ))}
               </div>

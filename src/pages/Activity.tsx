@@ -2,34 +2,41 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import ProjectSwitcher from "@/components/ProjectSwitcher";
 import { useUserProjects } from "@/hooks/useProjects";
 import { useActivityLogs, formatActivityMessage } from "@/hooks/useActivityLogs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const Activity = () => {
   const { data: projects, isLoading: projectsLoading } = useUserProjects();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
   const [searchParams] = useSearchParams();
 
-  // Auto-select project from URL parameter or if user has only one
+  // Auto-select project from URL parameter or default to first project
   useEffect(() => {
+    if (!projects || projects.length === 0) return;
+    
     const projectFromUrl = searchParams.get('project');
-    if (projectFromUrl && projects?.some(p => p.id === projectFromUrl)) {
-      setSelectedProjectId(projectFromUrl);
-    } else if (projects && projects.length === 1) {
-      setSelectedProjectId(projects[0].id);
+    if (projectFromUrl) {
+      const urlProject = projects.find(p => p.id === projectFromUrl);
+      if (urlProject) {
+        setSelectedProject(urlProject);
+        return;
+      }
     }
-  }, [projects, searchParams]);
+    
+    // Default to first project if no URL parameter or if URL project not found
+    if (!selectedProject && projects.length > 0) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects, searchParams, selectedProject]);
 
-  const { data: activityLogs, isLoading: logsLoading } = useActivityLogs(selectedProjectId);
+  const handleProjectSelect = (project: typeof projects[0]) => {
+    setSelectedProject(project);
+  };
+
+  const { data: activityLogs, isLoading: logsLoading } = useActivityLogs(selectedProject?.id);
 
   if (projectsLoading) {
     return (
@@ -66,28 +73,25 @@ const Activity = () => {
         <h1 className="text-3xl font-bold text-foreground mb-8">Activity</h1>
 
         {/* Project Selector */}
-        {projects.length > 1 && (
+        <div className="mb-8">
+          {selectedProject && (
+            <ProjectSwitcher
+              projects={projects}
+              selectedProject={selectedProject}
+              onProjectSelect={handleProjectSelect}
+            />
+          )}
+        </div>
+
+        {/* Project Description */}
+        {selectedProject?.description && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Select Project
-            </label>
-            <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.project_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <p className="text-muted-foreground">{selectedProject.description}</p>
           </div>
         )}
 
         {/* Activity Logs */}
-        {selectedProjectId ? (
+        {selectedProject ? (
           <div className="space-y-4">
             {logsLoading ? (
               <div className="space-y-4">

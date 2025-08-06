@@ -149,7 +149,7 @@ const Lineup = () => {
                 <div className="text-muted-foreground">Loading timeline...</div>
               </div>
             ) : (
-              <GanttChart tasks={tasks} />
+              <GanttChart tasks={tasks} projectMembers={projectMembers} />
             )}
           </div>
         )}

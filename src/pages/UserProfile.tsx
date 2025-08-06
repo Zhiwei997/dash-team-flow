@@ -25,7 +25,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, validateSession } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -69,10 +69,21 @@ const UserProfile = () => {
   };
 
   const createPrivateChat = async () => {
-    if (!currentUser || !userId) return;
+    if (!currentUser || !userId) {
+      console.error('Missing currentUser or userId:', { currentUser: !!currentUser, userId });
+      return;
+    }
+    
+    console.log('Creating chat between:', currentUser.id, 'and', userId);
     
     setIsCreatingChat(true);
     try {
+      // Refresh session to ensure we have valid auth
+      const session = await validateSession();
+      if (!session) {
+        alert('Please log in again to create a chat.');
+        return;
+      }
       // Check if a private conversation already exists between these users
       const { data: existingConversations, error: searchError } = await supabase
         .from('conversations')
@@ -103,6 +114,7 @@ const UserProfile = () => {
       }
 
       // Create new private conversation
+      console.log('Creating new conversation with created_by:', currentUser.id);
       const { data: conversation, error: conversationError } = await supabase
         .from('conversations')
         .insert({
@@ -115,6 +127,7 @@ const UserProfile = () => {
 
       if (conversationError) {
         console.error('Error creating conversation:', conversationError);
+        alert('Failed to create chat. Please try again.');
         return;
       }
 
@@ -136,13 +149,16 @@ const UserProfile = () => {
 
       if (membersError) {
         console.error('Error adding members:', membersError);
+        alert('Failed to add members to chat. Please try again.');
         return;
       }
 
+      console.log('Successfully created conversation:', conversation.id);
       // Navigate to the new conversation
       navigate(`/chat?conversation=${conversation.id}`);
     } catch (error) {
       console.error('Error creating private chat:', error);
+      alert('An unexpected error occurred. Please try again.');
     } finally {
       setIsCreatingChat(false);
     }

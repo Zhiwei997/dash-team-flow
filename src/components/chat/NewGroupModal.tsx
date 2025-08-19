@@ -109,7 +109,7 @@ const NewGroupModal = ({ open, onClose, onGroupCreated }: NewGroupModalProps) =>
       .insert({
         name: groupName,
         type: "group",
-        created_by: currentUser.id,
+        // created_by will be set automatically by database default to auth.uid()
       })
       .select()
       .single();

@@ -109,7 +109,7 @@ const NewChatModal = ({ open, onClose, onChatCreated }: NewChatModalProps) => {
       .from("conversations")
       .insert({
         type: "private",
-        created_by: currentUser.id,
+        // created_by will be set automatically by database default to auth.uid()
       })
       .select()
       .single();

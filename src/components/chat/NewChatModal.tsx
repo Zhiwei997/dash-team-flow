@@ -60,7 +60,7 @@ const NewChatModal = ({ open, onClose, onChatCreated }: NewChatModalProps) => {
     // Debug authentication state
     console.log("Creating chat - Current user:", currentUser);
     console.log("Auth state - User ID:", currentUser.id);
-    
+
     // Verify and refresh session before proceeding
     let session = await supabase.auth.getSession();
     if (!session.data.session) {
@@ -104,48 +104,25 @@ const NewChatModal = ({ open, onClose, onChatCreated }: NewChatModalProps) => {
       }
     }
 
-    // Create new conversation
-    const { data: conversation, error: conversationError } = await supabase
-      .from("conversations")
-      .insert({
-        type: "private",
-        // created_by will be set automatically by database default to auth.uid()
-      })
-      .select()
-      .single();
+    // Create new conversation with members and get the conversation ID
+    const members = [userId];
+    const { data, error } = await supabase.rpc('create_conversation_with_members', {
+      member_ids: members,
+      conversation_type: 'private',
+      name: ""
+    })
 
-    if (conversationError) {
+    if (error) {
       toast.error("Failed to create conversation");
-      console.error("Conversation error:", conversationError);
+      console.error("Conversation error:", error);
       setCreating(false);
       return;
     }
 
-    // Add both users as members
-    const { error: membersError } = await supabase
-      .from("conversation_members")
-      .insert([
-        {
-          conversation_id: conversation.id,
-          user_id: currentUser.id,
-          role: "owner",
-        },
-        {
-          conversation_id: conversation.id,
-          user_id: userId,
-          role: "member",
-        },
-      ]);
-
-    if (membersError) {
-      toast.error("Failed to add members to conversation");
-      console.error("Members error:", membersError);
-      setCreating(false);
-      return;
-    }
+    const conversationId = data;
 
     toast.success("Chat created successfully");
-    onChatCreated(conversation.id);
+    onChatCreated(conversationId);
     onClose();
     setCreating(false);
   };
@@ -161,7 +138,7 @@ const NewChatModal = ({ open, onClose, onChatCreated }: NewChatModalProps) => {
         <DialogHeader>
           <DialogTitle>Start New Chat</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

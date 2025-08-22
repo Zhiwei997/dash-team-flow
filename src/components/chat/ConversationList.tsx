@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,12 +46,7 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchConversations();
-    subscribeToConversations();
-  }, []);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!user?.id) return;
 
     const { data, error } = await supabase
@@ -136,9 +131,9 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
 
     setConversations(conversationsWithDetails);
     setLoading(false);
-  };
+  }, [user?.id]);
 
-  const subscribeToConversations = () => {
+  const subscribeToConversations = useCallback(() => {
     const channel = supabase
       .channel("conversations-changes")
       .on(
@@ -168,7 +163,7 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [fetchConversations]);
 
   const getConversationName = (conversation: Conversation) => {
     if (conversation.type === "group") {
@@ -182,10 +177,10 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
 
   const getConversationSubtext = (conversation: Conversation) => {
     if (conversation.lastMessage) {
-      const prefix = conversation.type === "group" && conversation.lastMessage.sender 
-        ? `${conversation.lastMessage.sender.full_name}: ` 
+      const prefix = conversation.type === "group" && conversation.lastMessage.sender
+        ? `${conversation.lastMessage.sender.full_name}: `
         : "";
-      
+
       if (conversation.lastMessage.content) {
         return `${prefix}${conversation.lastMessage.content}`;
       } else if (conversation.lastMessage.file_name) {
@@ -198,6 +193,12 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
   const filteredConversations = conversations.filter((conv) =>
     getConversationName(conv).toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    fetchConversations();
+    subscribeToConversations();
+  }, [fetchConversations, subscribeToConversations]);
+
 
   if (loading) {
     return (
@@ -213,7 +214,7 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
       <div className="p-4 border-b border-border">
         <h1 className="text-2xl font-bold text-foreground mb-4">Chat</h1>
       </div>
-      
+
       {/* Top Controls */}
       <div className="p-4 border-b border-border">
         <div className="flex space-x-2 mb-4">
@@ -226,7 +227,7 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
             New Group
           </Button>
         </div>
-        
+
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -253,11 +254,10 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
             filteredConversations.map((conversation) => (
               <div
                 key={conversation.id}
-                className={`flex items-center space-x-3 p-3 mx-1 mb-2 rounded-xl cursor-pointer transition-all duration-200 ${
-                  selectedConversationId === conversation.id 
-                    ? "bg-primary/10 border border-primary/30" 
-                    : "hover:bg-muted/50"
-                }`}
+                className={`flex items-center space-x-3 p-3 mx-1 mb-2 rounded-xl cursor-pointer transition-all duration-200 ${selectedConversationId === conversation.id
+                  ? "bg-primary/10 border border-primary/30"
+                  : "hover:bg-muted/50"
+                  }`}
                 onClick={() => onSelectConversation(conversation)}
               >
                 {/* Profile Picture/Initial */}
@@ -277,7 +277,7 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-medium text-foreground truncate text-sm">

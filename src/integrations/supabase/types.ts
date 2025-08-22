@@ -354,6 +354,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_conversation_with_members: {
+        Args: { conversation_type: string; member_ids: string[]; name: string }
+        Returns: string
+      }
       is_project_member: {
         Args: { project_id: string; user_id: string }
         Returns: boolean

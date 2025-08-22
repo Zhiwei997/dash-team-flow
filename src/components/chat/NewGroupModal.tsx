@@ -87,7 +87,7 @@ const NewGroupModal = ({ open, onClose, onGroupCreated }: NewGroupModalProps) =>
     // Debug authentication state
     console.log("Creating group - Current user:", currentUser);
     console.log("Auth state - User ID:", currentUser.id);
-    
+
     // Verify and refresh session before proceeding
     let session = await supabase.auth.getSession();
     if (!session.data.session) {
@@ -103,59 +103,29 @@ const NewGroupModal = ({ open, onClose, onGroupCreated }: NewGroupModalProps) =>
     console.log("Session verified - User ID:", session.data.session.user.id);
     setCreating(true);
 
-    // Create new group conversation
-    const { data: conversation, error: conversationError } = await supabase
-      .from("conversations")
-      .insert({
-        name: groupName,
-        type: "group",
-        // created_by will be set automatically by database default to auth.uid()
-      })
-      .select()
-      .single();
+    const members = [...selectedUsers.map((user) => user.id)];
+    const { data, error } = await supabase.rpc('create_conversation_with_members', {
+      member_ids: members,
+      conversation_type: 'group',
+      name: groupName
+    })
 
-    if (conversationError) {
+    if (error) {
       toast.error("Failed to create group");
-      console.error("Conversation error:", conversationError);
+      console.error("Group error:", error);
       setCreating(false);
       return;
     }
 
-    // Add creator as owner
-    const members = [
-      {
-        conversation_id: conversation.id,
-        user_id: currentUser.id,
-        role: "owner",
-      },
-      // Add selected users as members
-      ...selectedUsers.map((user) => ({
-        conversation_id: conversation.id,
-        user_id: user.id,
-        role: "member",
-      })),
-    ];
-
-    const { error: membersError } = await supabase
-      .from("conversation_members")
-      .insert(members);
-
-    if (membersError) {
-      toast.error("Failed to add members to group");
-      console.error("Members error:", membersError);
-      setCreating(false);
-      return;
-    }
-
-    toast.success("Group created successfully");
-    onGroupCreated(conversation.id);
-    onClose();
-    
     // Reset form
     setGroupName("");
     setSelectedUsers([]);
     setSearchTerm("");
     setUsers([]);
+
+    toast.success("Group created successfully");
+    onGroupCreated(data);
+    onClose();
     setCreating(false);
   };
 
@@ -170,7 +140,7 @@ const NewGroupModal = ({ open, onClose, onGroupCreated }: NewGroupModalProps) =>
         <DialogHeader>
           <DialogTitle>Create New Group</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div>
             <Label htmlFor="groupName">Group Name</Label>

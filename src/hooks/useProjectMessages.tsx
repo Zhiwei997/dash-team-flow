@@ -92,3 +92,37 @@ export const useSendProjectMessage = () => {
     },
   });
 };
+
+export const useDeleteProjectMessage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ messageId, projectId }: { messageId: string; projectId: string }) => {
+      const { error } = await supabase
+        .from("project_messages")
+        .delete()
+        .eq("id", messageId);
+
+      if (error) throw error;
+      return { messageId, projectId };
+    },
+    onSuccess: (data) => {
+      // Invalidate queries with the projectId
+      queryClient.invalidateQueries({ queryKey: ["project-messages", data.projectId] });
+      queryClient.invalidateQueries({ queryKey: ["activity-logs", data.projectId] });
+      
+      toast({
+        title: "Message deleted",
+        description: "The message has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete message. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error deleting message:", error);
+    },
+  });
+};

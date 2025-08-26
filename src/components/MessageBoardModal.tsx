@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, MessageSquare } from "lucide-react";
-import { useProjectMessages, useSendProjectMessage } from "@/hooks/useProjectMessages";
+import { Send, MessageSquare, Trash2 } from "lucide-react";
+import { useProjectMessages, useSendProjectMessage, useDeleteProjectMessage } from "@/hooks/useProjectMessages";
+import { useProjectMembers } from "@/hooks/useProjects";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 
 interface MessageBoardModalProps {
@@ -16,9 +19,16 @@ interface MessageBoardModalProps {
 }
 
 const MessageBoardModal = ({ open, onOpenChange, projectId, projectName }: MessageBoardModalProps) => {
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = useState("");
   const { data: messages = [], isLoading } = useProjectMessages(projectId);
+  const { data: members = [] } = useProjectMembers(projectId);
   const sendMessageMutation = useSendProjectMessage();
+  const deleteMessageMutation = useDeleteProjectMessage();
+
+  // Check if current user is project owner
+  const currentUserMember = members.find(m => m.user_id === user?.id);
+  const isOwner = currentUserMember?.role === 'owner';
 
   const handleSendMessage = async () => {
     if (!projectId || !newMessage.trim()) return;
@@ -39,6 +49,21 @@ const MessageBoardModal = ({ open, onOpenChange, projectId, projectName }: Messa
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleDeleteMessage = async (messageId: string, projectId: string) => {
+    try {
+      await deleteMessageMutation.mutateAsync({
+        messageId,
+        projectId
+      });
+    } catch (error) {
+      // Error handling is done in the mutation
+    }
+  };
+
+  const canDeleteMessage = (message: any) => {
+    return user && (message.user_id === user.id || isOwner);
   };
 
   return (
@@ -85,6 +110,36 @@ const MessageBoardModal = ({ open, onOpenChange, projectId, projectName }: Messa
                         {message.content}
                       </p>
                     </div>
+                    {canDeleteMessage(message) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive flex-shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete message?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the message.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteMessage(message.id, message.project_id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 ))
               )}

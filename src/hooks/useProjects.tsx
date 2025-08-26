@@ -65,6 +65,25 @@ export const useUserProjects = () => {
   });
 };
 
+export const useProject = (projectId: string | null) => {
+  return useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      if (!projectId) return null;
+
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!projectId,
+  });
+};
+
 export const useProjectMembers = (projectId: string | null) => {
   return useQuery({
     queryKey: ["project-members", projectId],

@@ -3,20 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { useUserProjects, useProjectMembers, Project } from "@/hooks/useProjects";
+import { useProject, useProjectMembers, useUserProjects } from "@/hooks/useProjects";
 import { useState } from "react";
 import ProjectMembersList from "./ProjectMembersList";
 import InviteMemberModal from "./InviteMemberModal";
 
 interface ProjectHeaderProps {
-  selectedProject: (Project & { userRole: string }) | null;
+  projectId: string | null;
 }
 
-const ProjectHeader = ({ selectedProject }: ProjectHeaderProps) => {
+const ProjectHeader = ({ projectId }: ProjectHeaderProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: projects = [], isLoading: projectsLoading } = useUserProjects();
-  const { data: members = [] } = useProjectMembers(selectedProject?.id || null);
+  const { data: project } = useProject(projectId);
+  const { data: members = [] } = useProjectMembers(projectId);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Check if current user is project owner
@@ -65,7 +66,7 @@ const ProjectHeader = ({ selectedProject }: ProjectHeaderProps) => {
     );
   }
 
-  if (!selectedProject) {
+  if (!project || !projectId) {
     return null;
   }
 
@@ -74,9 +75,9 @@ const ProjectHeader = ({ selectedProject }: ProjectHeaderProps) => {
       <div className="flex items-center justify-between">
         {/* Project Info */}
         <div className="flex flex-col space-y-2">
-          {selectedProject.description && (
+          {project.description && (
             <p className="text-sm text-muted-foreground max-w-md">
-              {selectedProject.description}
+              {project.description}
             </p>
           )}
         </div>
@@ -87,7 +88,7 @@ const ProjectHeader = ({ selectedProject }: ProjectHeaderProps) => {
             variant="outline" 
             size="sm" 
             className="bg-card hover:bg-muted"
-            onClick={() => navigate(`/project/${selectedProject.id}`)}
+            onClick={() => navigate(`/project/${project.id}`)}
           >
             <Settings className="h-4 w-4 mr-2" />
             Manage
@@ -110,11 +111,11 @@ const ProjectHeader = ({ selectedProject }: ProjectHeaderProps) => {
       <ProjectMembersList members={members} />
 
       {/* Invite Member Modal */}
-      {selectedProject && (
+      {project && (
         <InviteMemberModal
           isOpen={isInviteModalOpen}
           onClose={() => setIsInviteModalOpen(false)}
-          projectId={selectedProject.id}
+          projectId={project.id}
           existingMemberIds={members.map(m => m.user_id)}
         />
       )}

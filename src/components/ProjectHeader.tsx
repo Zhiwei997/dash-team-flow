@@ -3,26 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { useUserProjects, useProjectMembers } from "@/hooks/useProjects";
-import { useState, useEffect } from "react";
-import ProjectSwitcher from "./ProjectSwitcher";
+import { useUserProjects, useProjectMembers, Project } from "@/hooks/useProjects";
+import { useState } from "react";
 import ProjectMembersList from "./ProjectMembersList";
 import InviteMemberModal from "./InviteMemberModal";
 
-const ProjectHeader = () => {
+interface ProjectHeaderProps {
+  selectedProject: (Project & { userRole: string }) | null;
+}
+
+const ProjectHeader = ({ selectedProject }: ProjectHeaderProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: projects = [], isLoading: projectsLoading } = useUserProjects();
-  const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
   const { data: members = [] } = useProjectMembers(selectedProject?.id || null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-
-  // Set the first project as selected when projects load
-  useEffect(() => {
-    if (projects.length > 0 && !selectedProject) {
-      setSelectedProject(projects[0]);
-    }
-  }, [projects, selectedProject]);
 
   // Check if current user is project owner
   const currentUserMember = members.find(m => m.user_id === user?.id);

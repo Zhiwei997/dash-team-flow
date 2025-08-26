@@ -60,6 +60,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useProject } from "@/hooks/useProjects";
 import { supabase } from "@/integrations/supabase/client";
+import { UploadFilesModal } from "./UploadFilesModal";
 
 interface DocsFilesModalProps {
   projectId: string;
@@ -175,6 +176,7 @@ export const DocsFilesModal: React.FC<DocsFilesModalProps> = ({ projectId, isOpe
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
   const [editFile, setEditFile] = useState<ProjectFile | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   const fileToDelete = files.find(f => f.id === deleteFileId);
 
@@ -365,20 +367,13 @@ export const DocsFilesModal: React.FC<DocsFilesModalProps> = ({ projectId, isOpe
                 {files.length} file{files.length !== 1 ? 's' : ''}
               </div>
               <div className="flex items-center space-x-2">
-                <Input
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="file-upload"
+                <Button 
+                  onClick={() => setIsUploadModalOpen(true)}
                   disabled={uploadMutation.isPending}
-                />
-                <Label htmlFor="file-upload" asChild>
-                  <Button disabled={uploadMutation.isPending}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploadMutation.isPending ? 'Uploading...' : 'Upload Files'}
-                  </Button>
-                </Label>
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Files
+                </Button>
               </div>
             </div>
           </div>
@@ -415,6 +410,13 @@ export const DocsFilesModal: React.FC<DocsFilesModalProps> = ({ projectId, isOpe
           setEditFile(null);
         }}
         onSave={handleSaveEdit}
+      />
+
+      {/* Upload Files Modal */}
+      <UploadFilesModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        defaultProjectId={projectId}
       />
     </TooltipProvider>
   );

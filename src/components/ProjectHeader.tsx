@@ -79,11 +79,6 @@ const ProjectHeader = () => {
       <div className="flex items-center justify-between">
         {/* Project Info */}
         <div className="flex flex-col space-y-2">
-          <ProjectSwitcher
-            projects={projects}
-            selectedProject={selectedProject}
-            onProjectSelect={setSelectedProject}
-          />
           {selectedProject.description && (
             <p className="text-sm text-muted-foreground max-w-md">
               {selectedProject.description}

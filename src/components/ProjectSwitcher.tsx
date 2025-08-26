@@ -17,7 +17,7 @@ interface ProjectSwitcherProps {
 const ProjectSwitcher = ({ projects, selectedProject, onProjectSelect }: ProjectSwitcherProps) => {
   if (projects.length <= 1) {
     return (
-      <h2 className="text-2xl font-semibold text-foreground">
+      <h2 className="text-xl font-semibold text-foreground">
         {selectedProject.project_name}
       </h2>
     );
@@ -28,7 +28,7 @@ const ProjectSwitcher = ({ projects, selectedProject, onProjectSelect }: Project
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="p-0 h-auto text-left">
           <div className="flex items-center space-x-2">
-            <h2 className="text-2xl font-semibold text-foreground">
+            <h2 className="text-xl font-semibold text-foreground">
               {selectedProject.project_name}
             </h2>
             <ChevronDown className="h-5 w-5 text-muted-foreground" />

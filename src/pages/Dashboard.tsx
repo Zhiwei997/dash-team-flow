@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import ProjectHeader from "@/components/ProjectHeader";
+import ProjectSwitcher from "@/components/ProjectSwitcher";
 import FeatureCard from "@/components/FeatureCard";
 import RecentActivity from "@/components/RecentActivity";
 import MessageBoardModal from "@/components/MessageBoardModal";
@@ -127,9 +128,20 @@ const Dashboard = () => {
       
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Title */}
-        <h1 className="text-3xl font-bold text-foreground mb-8">
+        <h1 className="text-3xl font-bold text-foreground">
           Dashboard
         </h1>
+        
+        {/* Project Selector Toolbar */}
+        <div className="mt-2 mb-4">
+          {projects.length > 0 && selectedProject && (
+            <ProjectSwitcher
+              projects={projects}
+              selectedProject={selectedProject}
+              onProjectSelect={handleProjectChange}
+            />
+          )}
+        </div>
         
         {/* Project Header */}
         <div className="mb-8">

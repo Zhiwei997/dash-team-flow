@@ -54,9 +54,9 @@ const Dashboard = () => {
       icon: <MessageCircle className="h-8 w-8" />
     },
     {
-      title: "To-dos",
+      title: "Lineup",
       description: `Organize work and assign tasks for ${selectedProject?.project_name || 'this project'}.`,
-      buttonText: "Make a to-do list",
+      buttonText: "Go to add tasks",
       iconBg: "bg-feature-todos",
       icon: <CheckCircle className="h-8 w-8" />
     },
@@ -101,7 +101,7 @@ const Dashboard = () => {
         // Open the Message Board modal
         setIsMessageBoardOpen(true);
         break;
-      case "To-dos":
+      case "Lineup":
         // Navigate to lineup/tasks page with project context
         navigate(`/lineup${projectParam}`);
         break;

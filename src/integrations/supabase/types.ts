@@ -173,6 +173,42 @@ export type Database = {
           },
         ]
       }
+      project_files: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          mime_type: string | null
+          name: string
+          path: string
+          project_id: string
+          size: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          name: string
+          path: string
+          project_id: string
+          size?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          mime_type?: string | null
+          name?: string
+          path?: string
+          project_id?: string
+          size?: number | null
+        }
+        Relationships: []
+      }
       project_members: {
         Row: {
           id: string

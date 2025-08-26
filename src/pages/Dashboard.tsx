@@ -4,6 +4,7 @@ import ProjectSwitcher from "@/components/ProjectSwitcher";
 import FeatureCard from "@/components/FeatureCard";
 import RecentActivity from "@/components/RecentActivity";
 import MessageBoardModal from "@/components/MessageBoardModal";
+import { DocsFilesModal } from "@/components/DocsFilesModal";
 import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -17,6 +18,7 @@ const Dashboard = () => {
   const { data: projects = [] } = useUserProjects();
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
   const [isMessageBoardOpen, setIsMessageBoardOpen] = useState(false);
+  const [isDocsFilesOpen, setIsDocsFilesOpen] = useState(false);
 
   // Set project from URL parameter or default to first project
   useEffect(() => {
@@ -106,8 +108,8 @@ const Dashboard = () => {
         navigate(`/lineup${projectParam}`);
         break;
       case "Docs & Files":
-        // Navigate to a files page with project context (placeholder for now)
-        console.log(`Opening Docs & Files for project: ${selectedProject.project_name}`);
+        // Open the Docs & Files modal
+        setIsDocsFilesOpen(true);
         break;
       case "Chat":
         // Navigate to chat page with project context
@@ -193,6 +195,15 @@ const Dashboard = () => {
         projectId={selectedProject?.id || null}
         projectName={selectedProject?.project_name}
       />
+
+      {/* Docs & Files Modal */}
+      {selectedProject?.id && (
+        <DocsFilesModal
+          projectId={selectedProject.id}
+          isOpen={isDocsFilesOpen}
+          onClose={() => setIsDocsFilesOpen(false)}
+        />
+      )}
     </div>
   );
 };

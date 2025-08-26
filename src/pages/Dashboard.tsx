@@ -145,7 +145,7 @@ const Dashboard = () => {
         
         {/* Project Header */}
         <div className="mb-8">
-          <ProjectHeader selectedProject={selectedProject} />
+          <ProjectHeader key={selectedProject?.id} selectedProject={selectedProject} />
         </div>
         
         {/* Features Grid - First Row */}

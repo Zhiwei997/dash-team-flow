@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import Navigation from "@/components/Navigation";
 
-interface UserProfile {
+interface UserProfileData {
   id: string;
   full_name: string;
   email: string;
@@ -35,7 +35,7 @@ const useUserProfile = (userId: string | null) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data as UserProfile | null;
+      return data as UserProfileData | null;
     },
     enabled: !!userId,
   });

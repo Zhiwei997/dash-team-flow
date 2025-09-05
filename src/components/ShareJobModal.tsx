@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Send, Users, MessageCircle } from "lucide-react";
 import { Job } from "@/hooks/useJobs";
 import { toast } from "@/hooks/use-toast";
+import { useConversations } from "@/hooks/useConversations";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ShareJobModalProps {
   isOpen: boolean;
@@ -20,15 +23,27 @@ export const ShareJobModal = ({ isOpen, onClose, job }: ShareJobModalProps) => {
   const [shareType, setShareType] = useState<"existing" | "search">("existing");
   const [searchQuery, setSearchQuery] = useState("");
   const [message, setMessage] = useState(`Check out this job opportunity: ${job.title}`);
+  const { conversations, loading: loadingConversations } = useConversations();
+  const { user } = useAuth();
 
   // Mock data for existing chats
-  const existingChats = [
-    { id: "1", name: "Project Team", type: "group", members: 5 },
-    { id: "2", name: "John Doe", type: "direct", members: 1 },
-    { id: "3", name: "Design Team", type: "group", members: 3 },
-  ];
+  const existingChats = conversations.map((conversation) => ({
+    id: conversation.id,
+    name: conversation.name,
+    type: conversation.type,
+    members: conversation.members?.length || 0,
+  }));
 
-  const handleShare = (chatId: string, chatName: string) => {
+  const handleShare = async (chatId: string, chatName: string) => {
+    const messageContent = `${message}\n\n ${window.location.origin}/jobs/${job.id}`;
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert({
+        conversation_id: chatId,
+        content: messageContent,
+        sender_id: user.id,
+      });
     // In a real implementation, this would send the message to the selected chat
     toast({
       title: "Job Shared",
@@ -39,7 +54,7 @@ export const ShareJobModal = ({ isOpen, onClose, job }: ShareJobModalProps) => {
 
   const handleSearchShare = () => {
     if (!searchQuery.trim()) return;
-    
+
     // In a real implementation, this would search for users and send the message
     toast({
       title: "Job Shared",
@@ -143,7 +158,7 @@ export const ShareJobModal = ({ isOpen, onClose, job }: ShareJobModalProps) => {
                     placeholder="Enter name or email..."
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={handleSearchShare}
                   disabled={!searchQuery.trim()}
                   className="w-full"

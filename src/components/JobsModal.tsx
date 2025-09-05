@@ -23,7 +23,7 @@ export const JobsModal = ({ isOpen, onClose, projectId, projectName }: JobsModal
   const { user } = useAuth();
   const { data: jobs, isLoading } = useProjectJobs(projectId);
   const deleteJobMutation = useDeleteJob();
-  
+
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [sharingJob, setSharingJob] = useState<Job | null>(null);
@@ -79,7 +79,7 @@ export const JobsModal = ({ isOpen, onClose, projectId, projectName }: JobsModal
                               {job.title}
                             </button>
                           </div>
-                          
+
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
@@ -93,7 +93,7 @@ export const JobsModal = ({ isOpen, onClose, projectId, projectName }: JobsModal
 
                           <div className="text-sm">
                             <span className="text-muted-foreground">Publisher: </span>
-                            <button 
+                            <button
                               onClick={() => window.open(`/users/${job.created_by}`, '_blank')}
                               className="text-primary hover:underline"
                             >

@@ -5,6 +5,7 @@ import FeatureCard from "@/components/FeatureCard";
 import RecentActivity from "@/components/RecentActivity";
 import MessageBoardModal from "@/components/MessageBoardModal";
 import { DocsFilesModal } from "@/components/DocsFilesModal";
+import { JobsModal } from "@/components/JobsModal";
 import { MessageCircle, CheckCircle, FileText, MessageSquare, Briefcase } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -19,6 +20,7 @@ const Dashboard = () => {
   const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
   const [isMessageBoardOpen, setIsMessageBoardOpen] = useState(false);
   const [isDocsFilesOpen, setIsDocsFilesOpen] = useState(false);
+  const [isJobsOpen, setIsJobsOpen] = useState(false);
 
   // Set project from URL parameter or default to first project
   useEffect(() => {
@@ -116,8 +118,8 @@ const Dashboard = () => {
         navigate(`/chat${projectParam}`);
         break;
       case "Jobs":
-        // Navigate to a jobs page with project context (placeholder for now)
-        console.log(`Opening Jobs for project: ${selectedProject.project_name}`);
+        // Open the Jobs modal
+        setIsJobsOpen(true);
         break;
       default:
         console.log(`Clicked on ${featureTitle} for project: ${selectedProject.project_name}`);
@@ -202,6 +204,16 @@ const Dashboard = () => {
           projectId={selectedProject.id}
           isOpen={isDocsFilesOpen}
           onClose={() => setIsDocsFilesOpen(false)}
+        />
+      )}
+
+      {/* Jobs Modal */}
+      {selectedProject?.id && (
+        <JobsModal
+          isOpen={isJobsOpen}
+          onClose={() => setIsJobsOpen(false)}
+          projectId={selectedProject.id}
+          projectName={selectedProject.project_name}
         />
       )}
     </div>

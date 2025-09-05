@@ -100,6 +100,81 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          applicant_email: string
+          applicant_id: string
+          applicant_name: string
+          applied_at: string
+          id: string
+          job_id: string
+          status: string
+        }
+        Insert: {
+          applicant_email: string
+          applicant_id: string
+          applicant_name: string
+          applied_at?: string
+          id?: string
+          job_id: string
+          status?: string
+        }
+        Update: {
+          applicant_email?: string
+          applicant_id?: string
+          applicant_name?: string
+          applied_at?: string
+          id?: string
+          job_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          created_at: string
+          created_by: string
+          deadline: string | null
+          description: string
+          id: string
+          project_id: string
+          publisher_email: string
+          publisher_name: string
+          publisher_phone: string | null
+          required_people: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          deadline?: string | null
+          description: string
+          id?: string
+          project_id: string
+          publisher_email: string
+          publisher_name: string
+          publisher_phone?: string | null
+          required_people?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          deadline?: string | null
+          description?: string
+          id?: string
+          project_id?: string
+          publisher_email?: string
+          publisher_name?: string
+          publisher_phone?: string | null
+          required_people?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       message_read_receipts: {
         Row: {
           id: string

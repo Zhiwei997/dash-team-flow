@@ -18,6 +18,17 @@ export interface Job {
   updated_at: string;
 }
 
+export interface JobAttachment {
+  id: string;
+  job_id: string;
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_by: string;
+  created_at: string;
+}
+
 export interface JobApplication {
   id: string;
   job_id: string;
@@ -301,6 +312,133 @@ export const useUpdateJobApplication = () => {
       toast({
         title: "Error",
         description: "Failed to update application. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useJobAttachments = (jobId: string | null) => {
+  return useQuery({
+    queryKey: ["job-attachments", jobId],
+    queryFn: async () => {
+      if (!jobId) return [];
+
+      const { data, error } = await supabase
+        .from("job_attachments")
+        .select("*")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as JobAttachment[];
+    },
+    enabled: !!jobId,
+  });
+};
+
+export const useUploadJobAttachment = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ jobId, file, fileName }: { jobId: string; file: File; fileName: string }) => {
+      if (!user) throw new Error("User not authenticated");
+
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${jobId}/${Date.now()}.${fileExt}`;
+
+      // Upload file to storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("job-attachments")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Save metadata to database
+      const { data, error } = await supabase
+        .from("job_attachments")
+        .insert({
+          job_id: jobId,
+          file_name: fileName,
+          file_path: filePath,
+          file_size: file.size,
+          mime_type: file.type,
+          uploaded_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["job-attachments", data.job_id] });
+    },
+  });
+};
+
+export const useDeleteJobAttachment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (attachmentId: string) => {
+      // First get the attachment to know the file path
+      const { data: attachment, error: fetchError } = await supabase
+        .from("job_attachments")
+        .select("*")
+        .eq("id", attachmentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from("job-attachments")
+        .remove([attachment.file_path]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error } = await supabase
+        .from("job_attachments")
+        .delete()
+        .eq("id", attachmentId);
+
+      if (error) throw error;
+      return attachment;
+    },
+    onSuccess: (attachment) => {
+      queryClient.invalidateQueries({ queryKey: ["job-attachments", attachment.job_id] });
+      toast({
+        title: "Attachment Deleted",
+        description: "The file has been removed successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete attachment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useDownloadJobAttachment = () => {
+  return useMutation({
+    mutationFn: async (filePath: string) => {
+      const { data, error } = await supabase.storage
+        .from("job-attachments")
+        .download(filePath);
+
+      if (error) throw error;
+      return data;
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to download file. Please try again.",
         variant: "destructive",
       });
     },

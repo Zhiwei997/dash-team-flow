@@ -6,11 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload } from "lucide-react";
+import { CalendarIcon, Upload, X, FileText } from "lucide-react";
 import { format } from "date-fns";
-import { useCreateJob } from "@/hooks/useJobs";
+import { useCreateJob, useUploadJobAttachment } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
+import { cn, formatFileSize } from "@/lib/utils";
+import { useDropzone } from "react-dropzone";
+import { toast } from "@/hooks/use-toast";
 
 interface CreateJobModalProps {
   isOpen: boolean;
@@ -21,6 +23,7 @@ interface CreateJobModalProps {
 export const CreateJobModal = ({ isOpen, onClose, projectId }: CreateJobModalProps) => {
   const { user } = useAuth();
   const createJobMutation = useCreateJob();
+  const uploadAttachmentMutation = useUploadJobAttachment();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -32,33 +35,78 @@ export const CreateJobModal = ({ isOpen, onClose, projectId }: CreateJobModalPro
     deadline: undefined as Date | undefined,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    createJobMutation.mutate({
-      project_id: projectId,
-      title: formData.title,
-      description: formData.description,
-      required_people: formData.required_people,
-      publisher_name: formData.publisher_name,
-      publisher_email: formData.publisher_email,
-      publisher_phone: formData.publisher_phone || undefined,
-      deadline: formData.deadline ? format(formData.deadline, 'yyyy-MM-dd') : undefined,
-      created_by: user?.id || "",
-    }, {
-      onSuccess: () => {
-        onClose();
-        setFormData({
-          title: "",
-          description: "",
-          required_people: 1,
-          publisher_name: user?.user_metadata?.full_name || "",
-          publisher_email: user?.email || "",
-          publisher_phone: "",
-          deadline: undefined,
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    maxSize: 500 * 1024 * 1024, // 500MB
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        rejectedFiles.forEach((file) => {
+          if (file.file.size > 500 * 1024 * 1024) {
+            toast({
+              title: "File too large",
+              description: `${file.file.name} exceeds the 500MB limit`,
+              variant: "destructive",
+            });
+          }
         });
-      },
-    });
+      }
+      setSelectedFiles(prev => [...prev, ...acceptedFiles]);
+    },
+  });
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUploading(true);
+
+    try {
+      // First create the job
+      const job = await createJobMutation.mutateAsync({
+        project_id: projectId,
+        title: formData.title,
+        description: formData.description,
+        required_people: formData.required_people,
+        publisher_name: formData.publisher_name,
+        publisher_email: formData.publisher_email,
+        publisher_phone: formData.publisher_phone || undefined,
+        deadline: formData.deadline ? format(formData.deadline, 'yyyy-MM-dd') : undefined,
+        created_by: user?.id || "",
+      });
+
+      // Then upload attachments if any
+      if (selectedFiles.length > 0) {
+        await Promise.all(
+          selectedFiles.map(file =>
+            uploadAttachmentMutation.mutateAsync({
+              jobId: job.id,
+              file,
+              fileName: file.name,
+            })
+          )
+        );
+      }
+
+      onClose();
+      setFormData({
+        title: "",
+        description: "",
+        required_people: 1,
+        publisher_name: user?.user_metadata?.full_name || "",
+        publisher_email: user?.email || "",
+        publisher_phone: "",
+        deadline: undefined,
+      });
+      setSelectedFiles([]);
+    } catch (error) {
+      console.error("Error creating job:", error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -90,14 +138,46 @@ export const CreateJobModal = ({ isOpen, onClose, projectId }: CreateJobModalPro
               className="min-h-[120px]"
               required
             />
-            <div className="flex items-center gap-2 mt-2">
-              <Button type="button" variant="outline" size="sm" className="gap-2">
-                <Upload className="h-4 w-4" />
-                Upload Images/Files
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Attach relevant documents or images
-              </span>
+            <div className="space-y-3 mt-2">
+              <div
+                {...getRootProps()}
+                className={cn(
+                  "border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors",
+                  isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+                )}
+              >
+                <input {...getInputProps()} />
+                <div className="text-center">
+                  <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm font-medium">
+                    {isDragActive ? "Drop files here" : "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Max 500 MB per file</p>
+                </div>
+              </div>
+
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Selected Files:</p>
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{file.name}</span>
+                        <span className="text-xs text-muted-foreground">({formatFileSize(file.size)})</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -179,8 +259,8 @@ export const CreateJobModal = ({ isOpen, onClose, projectId }: CreateJobModalPro
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createJobMutation.isPending}>
-              {createJobMutation.isPending ? "Creating..." : "Create Job"}
+            <Button type="submit" disabled={createJobMutation.isPending || isUploading}>
+              {isUploading ? "Uploading..." : createJobMutation.isPending ? "Creating..." : "Create Job"}
             </Button>
           </div>
         </form>

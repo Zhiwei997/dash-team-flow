@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { User, Mail, Phone, MapPin, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Navigation from "@/components/Navigation";
-import { User, Mail, Phone, MapPin, Building, Flag, Hash, ArrowLeft, MessageCircle } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import Navigation from "@/components/Navigation";
 
-interface UserData {
+interface UserProfile {
+  id: string;
   full_name: string;
   email: string;
   contact_number: string;
@@ -17,318 +19,153 @@ interface UserData {
   province: string;
   country: string;
   postal_code: string;
+  created_at: string;
 }
 
-const UserProfile = () => {
-  const { userId } = useParams<{ userId: string }>();
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const { user: currentUser, validateSession } = useAuth();
-  const navigate = useNavigate();
+const useUserProfile = (userId: string | null) => {
+  return useQuery({
+    queryKey: ["user-profile", userId],
+    queryFn: async () => {
+      if (!userId) return null;
 
-  useEffect(() => {
-    if (!userId) {
-      setError("User ID not provided");
-      setLoading(false);
-      return;
-    }
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    const fetchUserData = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        
-        if (error) {
-          if (error.code === 'PGRST116') {
-            setError("User not found");
-          } else {
-            setError("Failed to load user data");
-          }
-          return;
-        }
+      if (error) throw error;
+      return data as UserProfile | null;
+    },
+    enabled: !!userId,
+  });
+};
 
-        setUserData(data);
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError("An error occurred while loading user data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserData();
-  }, [userId]);
+export const UserProfile = () => {
+  const { userId } = useParams();
+  const { data: userProfile, isLoading } = useUserProfile(userId || null);
 
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase();
-  };
+  if (!userId) {
+    return <Navigate to="/" replace />;
+  }
 
-  const createPrivateChat = async () => {
-    if (!currentUser || !userId) {
-      console.error('Missing currentUser or userId:', { currentUser: !!currentUser, userId });
-      return;
-    }
-    
-    console.log('Creating chat between:', currentUser.id, 'and', userId);
-    
-    setIsCreatingChat(true);
-    try {
-      // Refresh session to ensure we have valid auth
-      const session = await validateSession();
-      if (!session) {
-        alert('Please log in again to create a chat.');
-        return;
-      }
-      // Check if a private conversation already exists between these users
-      const { data: existingConversations, error: searchError } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          type,
-          conversation_members!inner(user_id)
-        `)
-        .eq('type', 'private');
-
-      if (searchError) {
-        console.error('Error searching for existing conversations:', searchError);
-        return;
-      }
-
-      // Find a conversation that has exactly these two users
-      const existingConversation = existingConversations?.find(conv => {
-        const memberIds = conv.conversation_members.map(m => m.user_id);
-        return memberIds.length === 2 && 
-               memberIds.includes(currentUser.id) && 
-               memberIds.includes(userId);
-      });
-
-      if (existingConversation) {
-        // Navigate to existing conversation
-        navigate(`/chat?conversation=${existingConversation.id}`);
-        return;
-      }
-
-      // Create new private conversation
-      console.log('Creating new conversation with created_by:', currentUser.id);
-      const { data: conversation, error: conversationError } = await supabase
-        .from('conversations')
-        .insert({
-          name: null,
-          type: 'private',
-          created_by: currentUser.id
-        })
-        .select()
-        .single();
-
-      if (conversationError) {
-        console.error('Error creating conversation:', conversationError);
-        alert('Failed to create chat. Please try again.');
-        return;
-      }
-
-      // Add both users as members
-      const { error: membersError } = await supabase
-        .from('conversation_members')
-        .insert([
-          {
-            conversation_id: conversation.id,
-            user_id: currentUser.id,
-            role: 'owner'
-          },
-          {
-            conversation_id: conversation.id,
-            user_id: userId,
-            role: 'member'
-          }
-        ]);
-
-      if (membersError) {
-        console.error('Error adding members:', membersError);
-        alert('Failed to add members to chat. Please try again.');
-        return;
-      }
-
-      console.log('Successfully created conversation:', conversation.id);
-      // Navigate to the new conversation
-      navigate(`/chat?conversation=${conversation.id}`);
-    } catch (error) {
-      console.error('Error creating private chat:', error);
-      alert('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsCreatingChat(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="text-center">Loading...</div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Loading user profile...</div>
         </div>
       </div>
     );
   }
 
-  if (error || !userData) {
+  if (!userProfile) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="text-center">
-            <p className="text-muted-foreground mb-4">{error || "User not found"}</p>
-            <Button onClick={() => navigate(-1)} variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
-            </Button>
-          </div>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">User profile not found</div>
         </div>
       </div>
     );
   }
-
-  // Check if this is the current user's own profile
-  const isOwnProfile = currentUser?.id === userId;
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Button onClick={() => navigate(-1)} variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-3xl font-bold text-foreground">
-              {isOwnProfile ? "My Profile" : `${userData.full_name}'s Profile`}
-            </h1>
-          </div>
-          <div className="flex items-center space-x-3">
-            {!isOwnProfile && (
-              <Button 
-                onClick={createPrivateChat} 
-                disabled={isCreatingChat}
-                className="flex items-center space-x-2"
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span>{isCreatingChat ? "Creating..." : "Chat Now"}</span>
-              </Button>
-            )}
-            {isOwnProfile && (
-              <Button onClick={() => navigate("/profile")} variant="outline">
-                Edit Profile
-              </Button>
-            )}
-          </div>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => window.history.back()}
+            className="mb-6 gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* User Info Card */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="text-center">
-              <Avatar className="h-24 w-24 mx-auto mb-4">
-                <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-                  {getInitials(userData.full_name)}
-                </AvatarFallback>
-              </Avatar>
-              <CardTitle className="text-xl">{userData.full_name}</CardTitle>
-              <p className="text-muted-foreground">{userData.role}</p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{userData.email}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{userData.contact_number}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Details Card */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>Details</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-2 flex items-center space-x-2">
-                      <Building className="h-4 w-4" />
-                      <span>Professional</span>
-                    </h4>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Profile */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
                     <div className="space-y-2">
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">Role:</span>
-                        <p className="text-sm">{userData.role}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">Email:</span>
-                        <p className="text-sm">{userData.email}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">Contact:</span>
-                        <p className="text-sm">{userData.contact_number}</p>
-                      </div>
+                      <CardTitle className="text-2xl flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                        {userProfile.full_name || "Unknown User"}
+                      </CardTitle>
+                      {userProfile.role && (
+                        <Badge variant="secondary" className="w-fit">
+                          {userProfile.role}
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-4">
+                </CardHeader>
+                <CardContent className="space-y-6">
                   <div>
-                    <h4 className="font-semibold text-foreground mb-2 flex items-center space-x-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>Location</span>
-                    </h4>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">City:</span>
-                        <p className="text-sm">{userData.city}</p>
+                    <h3 className="font-semibold mb-3">Contact Information</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a href={`mailto:${userProfile.email}`} className="text-primary hover:underline">
+                          {userProfile.email}
+                        </a>
                       </div>
-                      <div>
-                        <span className="text-sm font-medium text-muted-foreground">Province/State:</span>
-                        <p className="text-sm">{userData.province}</p>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-muted-foreground">Country:</span>
-                          <p className="text-sm flex items-center space-x-1">
-                            <Flag className="h-3 w-3" />
-                            <span>{userData.country}</span>
-                          </p>
+                      
+                      {userProfile.contact_number && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <a href={`tel:${userProfile.contact_number}`} className="text-primary hover:underline">
+                            {userProfile.contact_number}
+                          </a>
                         </div>
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-muted-foreground">Postal Code:</span>
-                          <p className="text-sm flex items-center space-x-1">
-                            <Hash className="h-3 w-3" />
-                            <span>{userData.postal_code}</span>
-                          </p>
+                      )}
+                      
+                      {(userProfile.city || userProfile.province || userProfile.country) && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {[userProfile.city, userProfile.province, userProfile.country]
+                              .filter(Boolean)
+                              .join(", ")}
+                            {userProfile.postal_code && ` ${userProfile.postal_code}`}
+                          </span>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Profile Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Member Since</span>
+                    <span>{format(new Date(userProfile.created_at), "MMM d, yyyy")}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">User ID</span>
+                    <span className="text-xs font-mono">{userProfile.id.slice(0, 8)}...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default UserProfile;

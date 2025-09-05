@@ -1,13 +1,14 @@
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Users, Mail, Phone, MapPin, Clock, ArrowLeft } from "lucide-react";
-import { useJob, useJobApplications, useUserJobApplication, useApplyToJob, useCancelJobApplication, useUpdateJobApplication } from "@/hooks/useJobs";
+import { Calendar, Users, Mail, Phone, MapPin, Clock, ArrowLeft, Download, Trash2, FileText } from "lucide-react";
+import { useJob, useJobApplications, useUserJobApplication, useApplyToJob, useCancelJobApplication, useUpdateJobApplication, useJobAttachments, useDeleteJobAttachment, useDownloadJobAttachment } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjectMembers } from "@/hooks/useProjects";
 import { formatDistanceToNow, format } from "date-fns";
+import { formatFileSize } from "@/lib/utils";
 import Navigation from "@/components/Navigation";
 
 export const JobDetail = () => {
@@ -17,10 +18,13 @@ export const JobDetail = () => {
   const { data: applications } = useJobApplications(jobId || null);
   const { data: userApplication } = useUserJobApplication(jobId || null);
   const { data: projectMembers } = useProjectMembers(job?.project_id || null);
+  const { data: attachments } = useJobAttachments(jobId || null);
   
   const applyToJobMutation = useApplyToJob();
   const cancelApplicationMutation = useCancelJobApplication();
   const updateApplicationMutation = useUpdateJobApplication();
+  const deleteAttachmentMutation = useDeleteJobAttachment();
+  const downloadAttachmentMutation = useDownloadJobAttachment();
 
   if (!jobId) {
     return <Navigate to="/" replace />;
@@ -68,6 +72,26 @@ export const JobDetail = () => {
 
   const handleUpdateApplication = (applicationId: string, status: string) => {
     updateApplicationMutation.mutate({ applicationId, status });
+  };
+
+  const handleDownloadAttachment = async (filePath: string, fileName: string) => {
+    try {
+      const blob = await downloadAttachmentMutation.mutateAsync(filePath);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
+  const handleDeleteAttachment = (attachmentId: string) => {
+    deleteAttachmentMutation.mutate(attachmentId);
   };
 
   const renderApplicationButton = () => {
@@ -178,6 +202,48 @@ export const JobDetail = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Attachments */}
+                  {attachments && attachments.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold mb-3">Attachments</h3>
+                      <div className="space-y-2">
+                        {attachments.map((attachment) => (
+                          <div key={attachment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <FileText className="h-5 w-5 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">{attachment.file_name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatFileSize(attachment.file_size)} • {format(new Date(attachment.created_at), "MMM d, yyyy")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownloadAttachment(attachment.file_path, attachment.file_name)}
+                                disabled={downloadAttachmentMutation.isPending}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              {isJobCreator && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteAttachment(attachment.id)}
+                                  disabled={deleteAttachmentMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -192,9 +258,12 @@ export const JobDetail = () => {
                       {applications.map((application) => (
                         <div key={application.id} className="flex items-center justify-between p-4 border rounded-lg">
                           <div className="space-y-1">
-                            <button className="text-primary hover:underline font-medium text-left">
+                            <Link 
+                              to={`/users/${application.applicant_id}`}
+                              className="text-primary hover:underline font-medium text-left"
+                            >
                               {application.applicant_name}
-                            </button>
+                            </Link>
                             <p className="text-sm text-muted-foreground">
                               {application.applicant_email}
                             </p>
@@ -243,9 +312,12 @@ export const JobDetail = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <button className="text-primary hover:underline font-medium">
+                    <Link 
+                      to={`/users/${job.created_by}`}
+                      className="text-primary hover:underline font-medium"
+                    >
                       {job.publisher_name}
-                    </button>
+                    </Link>
                   </div>
                   
                   <Separator />

@@ -12,7 +12,7 @@ import Messages from "./pages/Messages";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
-import UserProfile from "./pages/UserProfile";
+import { UserProfile } from "./pages/UserProfile";
 import CreateProject from "./pages/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import { JobDetail } from "./pages/JobDetail";
@@ -41,7 +41,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/:userId" element={<UserProfile />} />
+              <Route path="/users/:userId" element={<UserProfile />} />
               <Route path="/create-project" element={<CreateProject />} />
               <Route path="/project/:id" element={<ProjectDetails />} />
               <Route path="/jobs/:jobId" element={<JobDetail />} />

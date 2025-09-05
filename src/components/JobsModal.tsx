@@ -93,7 +93,10 @@ export const JobsModal = ({ isOpen, onClose, projectId, projectName }: JobsModal
 
                           <div className="text-sm">
                             <span className="text-muted-foreground">Publisher: </span>
-                            <button className="text-primary hover:underline">
+                            <button 
+                              onClick={() => window.open(`/users/${job.created_by}`, '_blank')}
+                              className="text-primary hover:underline"
+                            >
                               {job.publisher_name}
                             </button>
                           </div>

@@ -29,7 +29,7 @@ export const ShareJobModal = ({ isOpen, onClose, job }: ShareJobModalProps) => {
   // Mock data for existing chats
   const existingChats = conversations.map((conversation) => ({
     id: conversation.id,
-    name: conversation.name,
+    name: conversation.name || conversation.members.find((member) => member.user_id !== user.id)?.user?.full_name || "Unknown User",
     type: conversation.type,
     members: conversation.members?.length || 0,
   }));

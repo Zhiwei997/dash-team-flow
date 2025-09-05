@@ -26,7 +26,6 @@ export interface Conversation {
   unreadCount?: number;
 }
 
-
 export const useConversations = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 

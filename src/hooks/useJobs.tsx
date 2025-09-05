@@ -288,21 +288,100 @@ export const useCancelJobApplication = () => {
 
 export const useUpdateJobApplication = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ applicationId, status }: { applicationId: string; status: string }) => {
-      const { data, error } = await supabase
+      // First, get the application details
+      const { data: application, error: appError } = await supabase
+        .from("job_applications")
+        .select("*")
+        .eq("id", applicationId)
+        .single();
+
+      if (appError) throw appError;
+
+      // Get the job details
+      const { data: job, error: jobError } = await supabase
+        .from("jobs")
+        .select("id, project_id, created_by")
+        .eq("id", application.job_id)
+        .single();
+
+      if (jobError) throw jobError;
+
+      // Update application status
+      const { data: updatedApplication, error: updateError } = await supabase
         .from("job_applications")
         .update({ status })
         .eq("id", applicationId)
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (updateError) throw updateError;
+
+      // If accepting the application, add user to project members and log activities
+      if (status === 'accepted' && user) {
+        // Add applicant to project members (upsert to handle duplicates)
+        const { error: memberError } = await supabase
+          .from("project_members")
+          .upsert({
+            project_id: job.project_id,
+            user_id: application.applicant_id,
+            role: 'member'
+          }, {
+            onConflict: 'project_id,user_id'
+          });
+
+        if (memberError) {
+          console.warn('Failed to add member to project:', memberError);
+        }
+
+        // Log job application accepted activity
+        const { error: logError1 } = await supabase
+          .from("activity_logs")
+          .insert({
+            project_id: job.project_id,
+            user_id: user.id,
+            action: 'job_application_accepted',
+            details: {
+              job_id: job.id,
+              applicant_id: application.applicant_id,
+              applicant_name: application.applicant_name,
+              application_id: applicationId
+            }
+          });
+
+        if (logError1) {
+          console.warn('Failed to log job application accepted activity:', logError1);
+        }
+
+        // Log project member added via job activity
+        const { error: logError2 } = await supabase
+          .from("activity_logs")
+          .insert({
+            project_id: job.project_id,
+            user_id: user.id,
+            action: 'project_member_added_via_job',
+            details: {
+              job_id: job.id,
+              added_user_id: application.applicant_id,
+              added_user_name: application.applicant_name,
+              role: 'member'
+            }
+          });
+
+        if (logError2) {
+          console.warn('Failed to log project member added activity:', logError2);
+        }
+      }
+
+      return updatedApplication;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["job-applications", data.job_id] });
+      queryClient.invalidateQueries({ queryKey: ["project-members"] });
+      queryClient.invalidateQueries({ queryKey: ["activity-logs"] });
       toast({
         title: "Application Updated",
         description: `Application has been ${data.status}.`,

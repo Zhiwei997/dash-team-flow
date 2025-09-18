@@ -83,9 +83,9 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
   useEffect(() => {
     if (task && isOpen) {
       // Handle assigned_to: convert null/empty to "unassigned" for the Select component
-      const assignedValue = task.assigned_to && 
-        projectMembers.some(member => member.user_id === task.assigned_to) 
-        ? task.assigned_to 
+      const assignedValue = task.assigned_to &&
+        projectMembers.some(member => member.user_id === task.assigned_to)
+        ? task.assigned_to
         : "unassigned";
 
       form.reset({
@@ -129,7 +129,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
   };
 
   const taskColors = [
-    "#3b82f6", "#ef4444", "#10b981", "#f59e0b", 
+    "#3b82f6", "#ef4444", "#10b981", "#f59e0b",
     "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"
   ];
 
@@ -161,8 +161,8 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assigned To</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <Select
+                    onValueChange={field.onChange}
                     value={field.value || "unassigned"}
                     key={task?.id || "empty"}
                   >
@@ -276,7 +276,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
                 <FormItem>
                   <FormLabel>Module (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., RestoreAI" {...field} />
+                    <Input placeholder="e.g., AiNDORA" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

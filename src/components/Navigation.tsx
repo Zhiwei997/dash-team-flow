@@ -36,7 +36,7 @@ const Navigation = () => {
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         {/* Brand */}
         <div className="flex items-center space-x-8">
-          <button className="text-xl font-semibold text-nav-brand" onClick={() => handleNavClick("/")}>RestoreAI</button>
+          <button className="text-xl font-semibold text-nav-brand" onClick={() => handleNavClick("/")}>AiNDORA</button>
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-6">

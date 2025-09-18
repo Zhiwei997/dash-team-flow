@@ -45,7 +45,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!taskName || !startDate || !endDate) {
       return;
     }
@@ -71,7 +71,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
 
   const getRandomColor = () => {
     const colors = [
-      "#3b82f6", "#ef4444", "#10b981", "#f59e0b", 
+      "#3b82f6", "#ef4444", "#10b981", "#f59e0b",
       "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"
     ];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -107,7 +107,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
               id="moduleName"
               value={moduleName}
               onChange={(e) => setModuleName(e.target.value)}
-              placeholder="e.g., RestoreAI"
+              placeholder="e.g., AiNDORA"
             />
           </div>
 

@@ -9,7 +9,7 @@ const LandingPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-foreground">
-            Welcome to RestoreAI
+            Welcome to AiNDORA
           </CardTitle>
           <p className="text-muted-foreground mt-2">
             Organize work across teams and manage your projects efficiently.
@@ -30,7 +30,7 @@ const LandingPage = () => {
               </Link>
             </Button>
           </div>
-          
+
           <div className="text-center pt-4">
             <p className="text-sm text-muted-foreground">
               Get started by creating an account or logging in to manage your projects.

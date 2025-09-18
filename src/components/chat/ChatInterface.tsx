@@ -142,6 +142,26 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     };
   };
 
+  // Mark messages as read when window gains focus or is focused
+  useEffect(() => {
+    const handleFocus = () => {
+      markMessagesAsRead();
+    };
+
+    // Mark as read immediately if window is already focused
+    if (document.hasFocus()) {
+      markMessagesAsRead();
+    }
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
+    // Only rerun if conversation or user changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation?.id, user?.id]);
+
   const markMessagesAsRead = async () => {
     if (!conversation?.id || !user?.id) return;
 
@@ -225,7 +245,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     if (message.sender_id === user?.id) {
       const totalMembers = conversation.members?.length || 0;
       const readCount = message.read_receipts?.length || 0;
-      
+
       // Subtract 1 for the sender themselves
       if (readCount >= totalMembers - 1) {
         return <span className="text-xs text-green-400 flex items-center">✔️ Read</span>;
@@ -275,27 +295,25 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
-                message.sender_id === user?.id ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"
+                }`}
             >
               <div
-                className={`max-w-[70%] rounded-xl p-3 ${
-                  message.sender_id === user?.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground"
-                }`}
+                className={`max-w-[70%] rounded-xl p-3 ${message.sender_id === user?.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-foreground"
+                  }`}
               >
                 {message.sender_id !== user?.id && conversation.type === "group" && (
                   <p className="text-xs text-muted-foreground mb-1 font-medium">
                     {message.sender?.full_name}
                   </p>
                 )}
-                
+
                 {message.content && (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 )}
-                
+
                 {message.file_url && (
                   <div className="mt-2">
                     {isImageFile(message.file_type) ? (
@@ -321,7 +339,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
                     )}
                   </div>
                 )}
-                
+
                 <div className="flex items-center justify-between mt-2 text-xs">
                   <span className={`${message.sender_id === user?.id ? 'opacity-70' : 'text-muted-foreground'}`}>
                     {format(new Date(message.sent_at), "HH:mm")}
@@ -367,8 +385,8 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
               className="rounded-xl resize-none min-h-[40px]"
             />
           </div>
-          <Button 
-            onClick={sendMessage} 
+          <Button
+            onClick={sendMessage}
             disabled={loading || uploading || !newMessage.trim()}
             className="h-10 w-10 p-0 rounded-xl"
           >

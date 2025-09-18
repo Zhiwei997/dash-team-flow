@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -58,14 +58,6 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (conversation?.id) {
-      fetchMessages();
-      subscribeToMessages();
-      markMessagesAsRead();
-    }
-  }, [conversation?.id]);
-
-  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -73,7 +65,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!conversation?.id) return;
 
     const { data, error } = await supabase
@@ -107,9 +99,9 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     );
 
     setMessages(messagesWithSenders);
-  };
+  }, [conversation?.id]);
 
-  const subscribeToMessages = () => {
+  const subscribeToMessages = useCallback(() => {
     const channel = supabase
       .channel("messages-changes")
       .on(
@@ -140,7 +132,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [conversation?.id, fetchMessages]);
 
   // Mark messages as read when window gains focus or is focused
   useEffect(() => {
@@ -162,7 +154,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversation?.id, user?.id]);
 
-  const markMessagesAsRead = async () => {
+  const markMessagesAsRead = useCallback(async () => {
     if (!conversation?.id || !user?.id) return;
 
     const { data: unreadMessages } = await supabase
@@ -181,9 +173,9 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     await supabase
       .from("message_read_receipts")
       .upsert(readReceipts, { onConflict: "message_id,user_id" });
-  };
+  }, [conversation?.id, user?.id]);
 
-  const sendMessage = async () => {
+  const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !conversation?.id || !user?.id) return;
 
     setLoading(true);
@@ -200,7 +192,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       setNewMessage("");
     }
     setLoading(false);
-  };
+  }, [conversation?.id, user?.id, newMessage]);
 
   const handleFileUpload = async (file: File) => {
     if (!conversation?.id || !user?.id) return;
@@ -269,6 +261,15 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     );
     return otherMember?.user?.full_name || "Chat";
   };
+
+  useEffect(() => {
+    if (conversation?.id) {
+      fetchMessages();
+      subscribeToMessages();
+      markMessagesAsRead();
+    }
+  }, [conversation?.id, markMessagesAsRead, fetchMessages, subscribeToMessages]);
+
 
   return (
     <div className="flex flex-col h-full">

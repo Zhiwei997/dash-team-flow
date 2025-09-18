@@ -276,7 +276,7 @@ const TaskEditModal = ({ task, isOpen, onClose, projectMembers }: TaskEditModalP
                 <FormItem>
                   <FormLabel>Module (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., AiNDORA" {...field} />
+                    <Input placeholder="e.g., AiNDORA Flow" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

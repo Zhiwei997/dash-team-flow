@@ -107,7 +107,7 @@ const AddTaskModal = ({ projectId, projectMembers }: AddTaskModalProps) => {
               id="moduleName"
               value={moduleName}
               onChange={(e) => setModuleName(e.target.value)}
-              placeholder="e.g., AiNDORA"
+              placeholder="e.g., AiNDORA Flow"
             />
           </div>
 

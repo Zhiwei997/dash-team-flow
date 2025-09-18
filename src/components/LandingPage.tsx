@@ -9,7 +9,7 @@ const LandingPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-foreground">
-            Welcome to AiNDORA
+            Welcome to AiNDORA Flow
           </CardTitle>
           <p className="text-muted-foreground mt-2">
             Organize work across teams and manage your projects efficiently.

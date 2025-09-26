@@ -85,21 +85,21 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       return;
     }
 
-    // Fetch sender details separately
-    const messagesWithSenders = await Promise.all(
-      (data || []).map(async (message) => {
-        const { data: senderData } = await supabase
-          .from("users")
-          .select("full_name, email")
-          .eq("id", message.sender_id)
-          .single();
+    // Build a lookup map from conversation members to avoid N+1 lookups
+    const memberMap = new Map<string, { full_name: string; email: string }>();
+    (conversation.members || []).forEach((m) => {
+      if (m.user) {
+        memberMap.set(m.user_id, {
+          full_name: m.user.full_name,
+          email: m.user.email,
+        });
+      }
+    });
 
-        return {
-          ...message,
-          sender: senderData,
-        };
-      })
-    );
+    const messagesWithSenders = (data || []).map((message) => ({
+      ...message,
+      sender: memberMap.get(message.sender_id),
+    }));
 
     // Avoid updating state if the user has switched to a different conversation
     if (currentConversationIdRef.current !== requestedConversationId) {
@@ -108,7 +108,19 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
 
     setMessages(messagesWithSenders);
     setMessagesLoading(false);
-  }, [conversation?.id]);
+  }, [conversation]);
+
+  // Debounced refetch to avoid storms from rapid events
+  const fetchTimeoutRef = useRef<number | undefined>(undefined);
+  const scheduleFetchMessages = useCallback(() => {
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    fetchTimeoutRef.current = window.setTimeout(() => {
+      fetchMessages();
+      fetchTimeoutRef.current = undefined;
+    }, 200);
+  }, [fetchMessages]);
 
   const subscribeToMessages = useCallback(() => {
     if (!conversation?.id) return () => { };
@@ -124,18 +136,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
           filter: `conversation_id=eq.${conversation.id}`,
         },
         () => {
-          fetchMessages();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "message_read_receipts",
-        },
-        () => {
-          fetchMessages();
+          scheduleFetchMessages();
         }
       )
       .subscribe();
@@ -143,7 +144,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation?.id, fetchMessages]);
+  }, [conversation?.id, scheduleFetchMessages]);
 
   // Mark messages as read when window gains focus or is focused
   useEffect(() => {

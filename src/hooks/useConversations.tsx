@@ -35,13 +35,18 @@ export const useConversations = () => {
   const fetchConversations = useCallback(async () => {
     if (!user?.id) return;
 
+    // 1) Fetch conversations with embedded members and the latest message metadata
     const { data, error } = await supabase
       .from("conversations")
       .select(`
         *,
-        members:conversation_members(user_id, role)
+        members:conversation_members(user_id, role),
+        last_message:messages!messages_conversation_id_fkey(content, file_name, sent_at, sender_id) 
       `)
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      // limit the embedded last_message to 1 per conversation ordered by sent_at desc
+      .limit(1, { foreignTable: "messages" })
+      .order("sent_at", { ascending: false, foreignTable: "messages" });
 
     if (error) {
       console.error("Error fetching conversations:", error);
@@ -49,71 +54,88 @@ export const useConversations = () => {
       return;
     }
 
-    // Fetch members with user details and conversation details
-    const conversationsWithDetails = await Promise.all(
-      (data || []).map(async (conv) => {
-        // Get members with user details
-        const { data: membersData } = await supabase
-          .from("conversation_members")
-          .select("user_id, role")
-          .eq("conversation_id", conv.id);
+    type RawMember = { user_id: string; role: string };
+    type RawLastMessage = { content: string | null; file_name: string | null; sent_at: string; sender_id: string };
+    type RawConversation = {
+      id: string;
+      name: string | null;
+      type: string;
+      updated_at: string;
+      members?: RawMember[];
+      // Supabase embed on array relation returns an array
+      last_message?: RawLastMessage[] | null;
+    };
 
-        const membersWithUsers = await Promise.all(
-          (membersData || []).map(async (member) => {
-            const { data: userData } = await supabase
-              .from("users")
-              .select("full_name, email")
-              .eq("id", member.user_id)
-              .single();
+    const conversationsRaw: RawConversation[] = (data as unknown as RawConversation[]) || [];
 
-            return {
-              ...member,
-              user: userData,
-            };
-          })
-        );
+    // 2) Collect all user ids we need details for (members and last message senders)
+    const memberUserIds = new Set<string>();
+    const senderIds = new Set<string>();
+    for (const conv of conversationsRaw) {
+      (conv.members || []).forEach((m: RawMember) => memberUserIds.add(m.user_id));
+      const lm = Array.isArray(conv.last_message) ? conv.last_message?.[0] : undefined;
+      if (lm?.sender_id) senderIds.add(lm.sender_id);
+    }
+    const allUserIds = Array.from(new Set<string>([...memberUserIds, ...senderIds]));
 
-        // Get last message
-        const { data: lastMessageData } = await supabase
-          .from("messages")
-          .select("content, file_name, sent_at, sender_id")
-          .eq("conversation_id", conv.id)
-          .order("sent_at", { ascending: false })
-          .limit(1);
+    // 3) Batch fetch user info once
+    let usersById: Record<string, { full_name: string; email?: string } | undefined> = {};
+    if (allUserIds.length > 0) {
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("id, full_name, email")
+        .in("id", allUserIds);
+      if (!usersError && usersData) {
+        usersById = usersData.reduce<Record<string, { full_name: string; email?: string }>>((acc, u: { id: string; full_name: string; email: string }) => {
+          acc[u.id] = { full_name: u.full_name, email: u.email };
+          return acc;
+        }, {});
+      }
+    }
 
-        let lastMessageWithSender = null;
-        if (lastMessageData?.[0]) {
-          const { data: senderData } = await supabase
-            .from("users")
-            .select("full_name")
-            .eq("id", lastMessageData[0].sender_id)
-            .single();
-
-          lastMessageWithSender = {
-            ...lastMessageData[0],
-            sender: senderData,
-          };
+    // 4) Fetch unread counts via RPC (server-side aggregation)
+    const unreadByConversation: Record<string, number> = {};
+    {
+      const { data: unreadCounts, error: unreadErr } = await supabase
+        .rpc('get_unread_counts', { p_user_id: user.id });
+      if (!unreadErr && unreadCounts) {
+        for (const row of unreadCounts) {
+          unreadByConversation[row.conversation_id] = row.unread_count || 0;
         }
+      }
+    }
 
-        // Get unread count
-        const { count: unreadCount } = await supabase
-          .from("messages")
-          .select("id", { count: "exact" })
-          .eq("conversation_id", conv.id)
-          .neq("sender_id", user.id)
-          .not("id", "in", `(
-            SELECT message_id FROM message_read_receipts 
-            WHERE user_id = '${user.id}'
-          )`);
+    // 5) Assemble final shape with member.user and lastMessage.sender hydrated
+    const conversationsWithDetails: Conversation[] = conversationsRaw.map((conv) => {
+      const lmArr = Array.isArray(conv.last_message) ? conv.last_message : [];
+      const lm = lmArr?.[0];
+      const lastMessage = lm
+        ? {
+          content: lm.content ?? null,
+          file_name: lm.file_name ?? null,
+          sent_at: lm.sent_at,
+          sender: lm.sender_id ? { full_name: usersById[lm.sender_id]?.full_name ?? "" } : undefined,
+        }
+        : undefined;
 
-        return {
-          ...conv,
-          members: membersWithUsers,
-          lastMessage: lastMessageWithSender,
-          unreadCount: unreadCount || 0,
-        };
-      })
-    );
+      const members: NonNullable<Conversation["members"]> = (conv.members || []).map((m: RawMember) => ({
+        user_id: m.user_id,
+        role: m.role,
+        user: usersById[m.user_id]
+          ? { full_name: usersById[m.user_id]!.full_name, email: usersById[m.user_id]!.email }
+          : undefined,
+      }));
+
+      return {
+        id: conv.id,
+        name: conv.name,
+        type: conv.type,
+        updated_at: conv.updated_at,
+        members,
+        lastMessage,
+        unreadCount: unreadByConversation[conv.id] || 0,
+      };
+    });
 
     setConversations(conversationsWithDetails);
     setLoading(false);

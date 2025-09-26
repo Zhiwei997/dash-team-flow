@@ -108,7 +108,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
 
     setMessages(messagesWithSenders);
     setMessagesLoading(false);
-  }, [conversation]);
+  }, [conversation?.id, conversation.members]);
 
   // Debounced refetch to avoid storms from rapid events
   const fetchTimeoutRef = useRef<number | undefined>(undefined);
@@ -295,8 +295,14 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       if (typeof unsubscribe === "function") {
         unsubscribe();
       }
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = undefined;
+      }
     };
-  }, [conversation?.id, markMessagesAsRead, fetchMessages, subscribeToMessages]);
+    // Only run on conversation id change; avoid reruns when members change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation?.id]);
 
 
   return (

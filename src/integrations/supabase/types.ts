@@ -594,6 +594,13 @@ export type Database = {
         Args: { conversation_type: string; member_ids: string[]; name: string }
         Returns: string
       }
+      get_unread_counts: {
+        Args: { p_user_id: string }
+        Returns: {
+          conversation_id: string
+          unread_count: number
+        }[]
+      }
       is_project_member: {
         Args: { project_id: string; user_id: string }
         Returns: boolean

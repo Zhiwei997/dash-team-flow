@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import UserDropdown from "@/components/UserDropdown";
-import UserSearch from "@/components/UserSearch";
 import GlobalSearchModal from "@/components/GlobalSearchModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";

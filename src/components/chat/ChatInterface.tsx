@@ -57,6 +57,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentConversationIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     scrollToBottom();
@@ -68,6 +69,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
 
   const fetchMessages = useCallback(async () => {
     if (!conversation?.id) return;
+    const requestedConversationId = conversation.id;
 
     const { data, error } = await supabase
       .from("messages")
@@ -75,7 +77,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
         *,
         read_receipts:message_read_receipts(user_id, read_at)
       `)
-      .eq("conversation_id", conversation.id)
+      .eq("conversation_id", requestedConversationId)
       .order("sent_at", { ascending: true });
 
     if (error) {
@@ -99,13 +101,20 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       })
     );
 
+    // Avoid updating state if the user has switched to a different conversation
+    if (currentConversationIdRef.current !== requestedConversationId) {
+      return;
+    }
+
     setMessages(messagesWithSenders);
     setMessagesLoading(false);
   }, [conversation?.id]);
 
   const subscribeToMessages = useCallback(() => {
+    if (!conversation?.id) return () => { };
+    const channelName = `messages-changes-${conversation.id}`;
     const channel = supabase
-      .channel("messages-changes")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -266,12 +275,26 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   };
 
   useEffect(() => {
-    if (conversation?.id) {
-      setMessagesLoading(true);
-      fetchMessages();
-      subscribeToMessages();
-      markMessagesAsRead();
-    }
+    if (!conversation?.id) return;
+    // Track current conversation to prevent stale updates
+    currentConversationIdRef.current = conversation.id;
+    // Reset UI while loading new conversation
+    setMessages([]);
+    setMessagesLoading(true);
+    fetchMessages();
+    const unsubscribe = subscribeToMessages();
+    markMessagesAsRead();
+
+    return () => {
+      // Prevent late responses from previous fetches from updating state
+      if (currentConversationIdRef.current === conversation.id) {
+        currentConversationIdRef.current = null;
+      }
+      // Clean up realtime subscription for previous conversation
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    };
   }, [conversation?.id, markMessagesAsRead, fetchMessages, subscribeToMessages]);
 
 

@@ -105,19 +105,21 @@ const Messages = () => {
   }
 
   const handleSelectConversation = async (conversation: Conversation) => {
-    // Fetch full conversation details with members
+    // Immediately show the chat UI with basic info on mobile
+    setSelectedConversation(conversation);
+
+    // Then fetch full conversation details with members and update
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
       .eq("id", conversation.id)
       .single();
 
-    if (error) {
+    if (error || !data) {
       console.error("Error fetching conversation details:", error);
       return;
     }
 
-    // Fetch members separately
     const { data: membersData } = await supabase
       .from("conversation_members")
       .select("user_id, role")
@@ -145,19 +147,21 @@ const Messages = () => {
   };
 
   const handleChatCreated = async (conversationId: string) => {
-    // Fetch the new conversation and select it
+    // Optimistically show empty conversation UI on mobile
+    setSelectedConversation({ id: conversationId, name: null, type: "direct" });
+
+    // Fetch the new conversation and select it with full details
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
       .eq("id", conversationId)
       .single();
 
-    if (error) {
+    if (error || !data) {
       console.error("Error fetching new conversation:", error);
       return;
     }
 
-    // Fetch members separately
     const { data: membersData } = await supabase
       .from("conversation_members")
       .select("user_id, role")
@@ -189,11 +193,11 @@ const Messages = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="h-[calc(100vh-200px)] flex rounded-lg border border-border overflow-hidden">
           {/* Left Panel - Conversation List */}
-          <div className="w-80 border-r border-border bg-card">
+          <div className={`${selectedConversation ? 'hidden md:block' : 'block'} w-full md:w-80 border-r border-border bg-card`}>
             <ConversationList
               onSelectConversation={handleSelectConversation}
               onNewChat={() => setShowNewChatModal(true)}
@@ -201,16 +205,16 @@ const Messages = () => {
               selectedConversationId={selectedConversation?.id}
             />
           </div>
-          
+
           {/* Right Panel - Chat Interface or Welcome */}
-          <div className="flex-1 bg-background">
+          <div className={`${selectedConversation ? 'block' : 'hidden'} md:block flex-1 bg-background relative`}>
             {selectedConversation ? (
               <ChatInterface
                 conversation={selectedConversation}
                 onBack={() => setSelectedConversation(null)}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="hidden md:flex flex-col items-center justify-center h-full text-center">
                 <h2 className="text-xl font-semibold text-foreground mb-2">Select a conversation</h2>
                 <p className="text-muted-foreground">Choose a contact from the list to start chatting</p>
               </div>

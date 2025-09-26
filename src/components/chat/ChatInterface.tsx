@@ -50,6 +50,7 @@ interface ChatInterfaceProps {
 
 const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState<boolean>(true);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -99,6 +100,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
     );
 
     setMessages(messagesWithSenders);
+    setMessagesLoading(false);
   }, [conversation?.id]);
 
   const subscribeToMessages = useCallback(() => {
@@ -176,6 +178,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
   }, [conversation?.id, user?.id]);
 
   const sendMessage = useCallback(async () => {
+    if (messagesLoading) return;
     if (!newMessage.trim() || !conversation?.id || !user?.id) return;
 
     setLoading(true);
@@ -192,7 +195,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       setNewMessage("");
     }
     setLoading(false);
-  }, [conversation?.id, user?.id, newMessage]);
+  }, [conversation?.id, user?.id, newMessage, messagesLoading]);
 
   const handleFileUpload = async (file: File) => {
     if (!conversation?.id || !user?.id) return;
@@ -264,6 +267,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
 
   useEffect(() => {
     if (conversation?.id) {
+      setMessagesLoading(true);
       fetchMessages();
       subscribeToMessages();
       markMessagesAsRead();
@@ -272,7 +276,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
 
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* Header */}
       <div className="border-b border-border p-4 bg-card/50">
         <div className="flex items-center space-x-3">
@@ -292,66 +296,72 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"
-                }`}
-            >
+        {messagesLoading ? (
+          <div className="h-full w-full flex items-center justify-center">
+            <div className="flex items-center space-x-2 text-muted-foreground">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+              <span>Loading chat…</span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.map((message) => (
               <div
-                className={`max-w-[70%] rounded-xl p-3 ${message.sender_id === user?.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground"
-                  }`}
+                key={message.id}
+                className={`flex ${message.sender_id === user?.id ? "justify-end" : "justify-start"}`}
               >
-                {message.sender_id !== user?.id && conversation.type === "group" && (
-                  <p className="text-xs text-muted-foreground mb-1 font-medium">
-                    {message.sender?.full_name}
-                  </p>
-                )}
+                <div
+                  className={`max-w-[70%] rounded-xl p-3 ${message.sender_id === user?.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground"
+                    }`}
+                >
+                  {message.sender_id !== user?.id && conversation.type === "group" && (
+                    <p className="text-xs text-muted-foreground mb-1 font-medium">
+                      {message.sender?.full_name}
+                    </p>
+                  )}
 
-                {message.content && (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                )}
+                  {message.content && (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                  )}
 
-                {message.file_url && (
-                  <div className="mt-2">
-                    {isImageFile(message.file_type) ? (
-                      <img
-                        src={message.file_url}
-                        alt={message.file_name || "Image"}
-                        className="max-w-full h-auto rounded-lg cursor-pointer border border-border"
-                        onClick={() => window.open(message.file_url!, "_blank")}
-                      />
-                    ) : (
-                      <div className="flex items-center space-x-2 p-2 bg-muted/50 rounded-lg border border-border">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm flex-1 text-foreground">{message.file_name}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
+                  {message.file_url && (
+                    <div className="mt-2">
+                      {isImageFile(message.file_type) ? (
+                        <img
+                          src={message.file_url}
+                          alt={message.file_name || "Image"}
+                          className="max-w-full h-auto rounded-lg cursor-pointer border border-border"
                           onClick={() => window.open(message.file_url!, "_blank")}
-                          className="h-8 w-8 p-0 hover:bg-muted"
-                        >
-                          <Download className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                        />
+                      ) : (
+                        <div className="flex items-center space-x-2 p-2 bg-muted/50 rounded-lg border border-border">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm flex-1 text-foreground">{message.file_name}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => window.open(message.file_url!, "_blank")}
+                            className="h-8 w-8 p-0 hover:bg-muted"
+                          >
+                            <Download className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                <div className="flex items-center justify-between mt-2 text-xs">
-                  <span className={`${message.sender_id === user?.id ? 'opacity-70' : 'text-muted-foreground'}`}>
-                    {format(new Date(message.sent_at), "HH:mm")}
-                  </span>
-                  {getMessageStatus(message)}
+                  <div className="flex items-center justify-between mt-2 text-xs">
+                    <span className={`${message.sender_id === user?.id ? 'opacity-70' : 'text-muted-foreground'}`}>{format(new Date(message.sent_at), "HH:mm")}</span>
+                    {getMessageStatus(message)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </ScrollArea>
 
       {/* Message Input */}
@@ -371,7 +381,7 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
             variant="ghost"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || messagesLoading}
             className="h-10 w-10 p-0 hover:bg-muted rounded-xl"
           >
             <Paperclip className="h-5 w-5" />
@@ -381,14 +391,14 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-              disabled={loading || uploading}
+              onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && !messagesLoading && sendMessage()}
+              disabled={false}
               className="rounded-xl resize-none min-h-[40px]"
             />
           </div>
           <Button
             onClick={sendMessage}
-            disabled={loading || uploading || !newMessage.trim()}
+            disabled={messagesLoading || loading || uploading || !newMessage.trim()}
             className="h-10 w-10 p-0 rounded-xl"
           >
             <Send className="h-5 w-5" />

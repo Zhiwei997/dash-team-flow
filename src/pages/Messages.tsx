@@ -194,8 +194,8 @@ const Messages = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="h-[calc(100vh-200px)] flex rounded-lg border border-border overflow-hidden">
+      <div className="max-w-7xl mx-auto px-0 py-0 md:px-6 md:py-8">
+        <div className="h-[calc(100vh-200px)] flex md:rounded-lg border border-border overflow-hidden">
           {/* Left Panel - Conversation List */}
           <div className={`${selectedConversation ? 'hidden md:block' : 'block'} w-full md:w-80 border-r border-border bg-card`}>
             <ConversationList

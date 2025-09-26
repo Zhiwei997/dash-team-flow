@@ -55,14 +55,6 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
   // Data is provided by useConversations hook
 
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Loading conversations...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -98,7 +90,11 @@ const ConversationList = ({ onSelectConversation, onNewChat, onNewGroup, selecte
       {/* Conversation List */}
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {filteredConversations.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading conversations...</p>
+            </div>
+          ) : filteredConversations.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">No conversations found</p>
               <Button onClick={onNewChat}>

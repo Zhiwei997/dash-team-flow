@@ -37,7 +37,7 @@ const ProjectDetails = () => {
     queryKey: ["project", id],
     queryFn: async () => {
       if (!id) throw new Error("Project ID is required");
-      
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
@@ -88,7 +88,7 @@ const ProjectDetails = () => {
   const deleteProjectMutation = useMutation({
     mutationFn: async () => {
       if (!id) throw new Error("Project ID is required");
-      
+
       const { error } = await supabase
         .from("projects")
         .delete()
@@ -143,7 +143,7 @@ const ProjectDetails = () => {
   const leaveProjectMutation = useMutation({
     mutationFn: async () => {
       if (!currentUserMember?.id) throw new Error("User membership not found");
-      
+
       const { error } = await supabase
         .from("project_members")
         .delete()
@@ -209,20 +209,20 @@ const ProjectDetails = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
-      <div className="max-w-4xl mx-auto px-6 py-8">
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Back Button */}
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
 
         {/* Project Header */}
-        <Card className="mb-8">
+        <Card className="mb-6 sm:mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -240,11 +240,11 @@ const ProjectDetails = () => {
               </Badge>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             <div className="flex flex-col space-y-4">
               {/* Project Dates */}
-              <div className="flex space-x-8">
+              <div className="flex flex-col sm:flex-row sm:space-x-8 space-y-2 sm:space-y-0">
                 {project.start_date && (
                   <div>
                     <p className="text-sm font-medium text-foreground">Start Date</p>
@@ -275,7 +275,7 @@ const ProjectDetails = () => {
                         <UserPlus className="h-4 w-4 mr-2" />
                         Add Member
                       </Button>
-                      
+
                       <Button
                         variant="destructive"
                         onClick={handleDeleteProject}
@@ -286,7 +286,7 @@ const ProjectDetails = () => {
                       </Button>
                     </>
                   )}
-                  
+
                   {!isOwner && currentUserMember && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -321,19 +321,19 @@ const ProjectDetails = () => {
         </Card>
 
         {/* Project Members */}
-        <Card>
+        <Card className="mt-6 sm:mt-8">
           <CardHeader>
             <CardTitle className="text-xl">
               Project Members ({members.length})
             </CardTitle>
           </CardHeader>
-          
+
           <CardContent>
             <div className="space-y-4">
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
                 >
                   <div
                     className="flex items-center space-x-4 cursor-pointer flex-1"
@@ -344,7 +344,7 @@ const ProjectDetails = () => {
                         {member.user?.full_name?.slice(0, 2).toUpperCase() || "UN"}
                       </AvatarFallback>
                     </Avatar>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h3 className="font-medium text-foreground">

@@ -25,7 +25,7 @@ const Dashboard = () => {
   // Set project from URL parameter or default to first project
   useEffect(() => {
     if (!projects || projects.length === 0) return;
-    
+
     const projectFromUrl = searchParams.get('project');
     if (projectFromUrl) {
       const urlProject = projects.find(p => p.id === projectFromUrl);
@@ -34,7 +34,7 @@ const Dashboard = () => {
         return;
       }
     }
-    
+
     // Default to first project if no URL parameter or if URL project not found
     if (!selectedProject && projects.length > 0) {
       setSelectedProject(projects[0]);
@@ -53,35 +53,35 @@ const Dashboard = () => {
     {
       title: "Message Board",
       description: `Post announcements and keep discussions organized for ${selectedProject?.project_name || 'this project'}.`,
-      buttonText: "Write a message",
+      buttonText: "View Message Board",
       iconBg: "bg-feature-message",
       icon: <MessageCircle className="h-8 w-8" />
     },
     {
       title: "Lineup",
       description: `Organize work and assign tasks for ${selectedProject?.project_name || 'this project'}.`,
-      buttonText: "Go to add tasks",
+      buttonText: "View Lineup",
       iconBg: "bg-feature-todos",
       icon: <CheckCircle className="h-8 w-8" />
     },
     {
       title: "Docs & Files",
       description: `Share documents and files for ${selectedProject?.project_name || 'this project'}.`,
-      buttonText: "Add docs & files",
+      buttonText: "View Docs & Files",
       iconBg: "bg-feature-docs",
       icon: <FileText className="h-8 w-8" />
     },
     {
       title: "Chat",
       description: `Chat with team members working on ${selectedProject?.project_name || 'this project'}.`,
-      buttonText: "Start chatting",
+      buttonText: "Start Chat",
       iconBg: "bg-feature-chat",
       icon: <MessageSquare className="h-8 w-8" />
     },
     {
       title: "Jobs",
       description: `Track jobs and assignments for ${selectedProject?.project_name || 'this project'}.`,
-      buttonText: "Create a job",
+      buttonText: "View Jobs",
       iconBg: "bg-feature-jobs",
       icon: <Briefcase className="h-8 w-8" />
     }
@@ -92,14 +92,14 @@ const Dashboard = () => {
       navigate("/login");
       return;
     }
-    
+
     if (!selectedProject) {
       console.warn("No project selected");
       return;
     }
 
     const projectParam = `?project=${selectedProject.id}`;
-    
+
     switch (featureTitle) {
       case "Message Board":
         // Open the Message Board modal
@@ -129,13 +129,13 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Title */}
         <h1 className="text-3xl font-bold text-foreground">
           Dashboard
         </h1>
-        
+
         {/* Project Selector Toolbar */}
         <div className="mt-2 mb-4">
           {projects.length > 0 && selectedProject && (
@@ -146,12 +146,12 @@ const Dashboard = () => {
             />
           )}
         </div>
-        
+
         {/* Project Header */}
         <div className="mb-8">
           <ProjectHeader key={selectedProject?.id} projectId={selectedProject?.id || null} />
         </div>
-        
+
         {/* Features Grid - First Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {features.slice(0, 3).map((feature) => (
@@ -183,7 +183,7 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
-        
+
         {/* Recent Activity */}
         <div>
           <RecentActivity projectId={selectedProject?.id} />

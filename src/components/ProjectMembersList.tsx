@@ -10,7 +10,7 @@ const ProjectMembersList = ({ members }: ProjectMembersListProps) => {
   const navigate = useNavigate();
 
   const handleMemberClick = (userId: string) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/users/${userId}`);
   };
 
   return (
@@ -20,7 +20,7 @@ const ProjectMembersList = ({ members }: ProjectMembersListProps) => {
           Project Members ({members.length})
         </span>
       </div>
-      
+
       <div className="flex items-center space-x-3">
         {members.map((member) => (
           <div

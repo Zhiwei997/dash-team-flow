@@ -181,7 +181,14 @@ const ProjectDetails = () => {
   };
 
   const handleMemberClick = (userId: string) => {
-    navigate(`/profile/${userId}`);
+    if (!userId) return;
+
+    if (userId === user?.id) {
+      navigate(`/profile`);
+      return;
+    }
+
+    navigate(`/users/${userId}`);
   };
 
   if (projectLoading || membersLoading) {

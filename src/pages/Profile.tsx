@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Navigation from "@/components/Navigation";
-import { User, Mail, Phone, MapPin, Building, Flag, Hash } from "lucide-react";
+import { User, Mail, Phone, MapPin, Building, Flag, Hash, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,12 +37,12 @@ const Profile = () => {
           .select('*')
           .eq('id', user.id)
           .single();
-        
+
         if (data && !error) {
           setUserData(data);
         }
       };
-      
+
       fetchUserData();
     }
   }, [user, loading, navigate]);
@@ -53,7 +53,14 @@ const Profile = () => {
   };
 
   if (loading || !userData) {
-    return <div>Loading...</div>;
+    return <div>
+      <Navigation />
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
+      </div>
+    </div>;
   }
 
   const getInitials = (name: string) => {
@@ -63,7 +70,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-foreground">Profile</h1>

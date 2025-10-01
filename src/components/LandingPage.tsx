@@ -6,7 +6,7 @@ import { LogIn, UserPlus } from "lucide-react";
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-foreground">
             Welcome to AiNDORA Flow

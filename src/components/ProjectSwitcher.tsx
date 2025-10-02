@@ -38,7 +38,7 @@ const ProjectSwitcher = ({ projects, selectedProject, onProjectSelect }: Project
               <span className="font-medium">{project.project_name}</span>
               {project.description && (
                 <span className="text-sm text-muted-foreground truncate">
-                  {project.description}
+                  {project.description.length > 35 ? project.description.slice(0, 35) + "..." : project.description}
                 </span>
               )}
             </div>

@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, UserPlus, UserMinus, Trash2, LogOut } from "lucide-react";
+import { ArrowLeft, UserPlus, UserMinus, Trash2, LogOut, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Navigation from "@/components/Navigation";
 import InviteMemberModal from "@/components/InviteMemberModal";
+import EditProjectModal from "@/components/EditProjectModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,7 @@ const ProjectDetails = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery({
@@ -168,6 +170,35 @@ const ProjectDetails = () => {
     },
   });
 
+  // Update project mutation
+  const updateProjectMutation = useMutation({
+    mutationFn: async (updates: Partial<typeof project>) => {
+      if (!id) throw new Error("Project ID is required");
+
+      const { error } = await supabase
+        .from("projects")
+        .update(updates)
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Project updated successfully",
+        description: "The project details have been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
+      queryClient.invalidateQueries({ queryKey: ["user-projects"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating project",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteProject = () => {
     if (window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
       deleteProjectMutation.mutate();
@@ -256,7 +287,7 @@ const ProjectDetails = () => {
                   <div>
                     <p className="text-sm font-medium text-foreground">Start Date</p>
                     <p className="text-muted-foreground">
-                      {format(new Date(project.start_date), "MMM dd, yyyy")}
+                      {format(new Date(project.start_date + 'T00:00:00'), "MMM dd, yyyy")}
                     </p>
                   </div>
                 )}
@@ -264,7 +295,7 @@ const ProjectDetails = () => {
                   <div>
                     <p className="text-sm font-medium text-foreground">End Date</p>
                     <p className="text-muted-foreground">
-                      {format(new Date(project.end_date), "MMM dd, yyyy")}
+                      {format(new Date(project.end_date + 'T00:00:00'), "MMM dd, yyyy")}
                     </p>
                   </div>
                 )}
@@ -275,6 +306,14 @@ const ProjectDetails = () => {
                 <div className="flex space-x-3 pt-4 border-t border-border">
                   {isOwner && (
                     <>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEditModalOpen(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Project
+                      </Button>
+
                       <Button
                         variant="outline"
                         onClick={() => setIsInviteModalOpen(true)}
@@ -394,6 +433,16 @@ const ProjectDetails = () => {
           projectId={id!}
           existingMemberIds={members.map(m => m.user_id)}
         />
+
+        {/* Edit Project Modal */}
+        {project && (
+          <EditProjectModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            project={project}
+            onUpdate={updateProjectMutation.mutate}
+          />
+        )}
       </div>
     </div>
   );

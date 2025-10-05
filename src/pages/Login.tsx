@@ -123,6 +123,14 @@ const Login = () => {
               />
             </div>
 
+            <div className="text-right">
+              <Button variant="link" asChild className="p-0 h-auto text-sm">
+                <Link to="/forgot-password">
+                  Forgot your password?
+                </Link>
+              </Button>
+            </div>
+
             <div>
               <Separator />
               <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 bg-white text-gray-500 text-sm">

@@ -50,7 +50,7 @@ const Register = () => {
 
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,

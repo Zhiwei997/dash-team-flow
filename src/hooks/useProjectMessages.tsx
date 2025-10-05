@@ -8,6 +8,7 @@ export interface ProjectMessage {
   project_id: string;
   user_id: string;
   content: string;
+  image_urls?: string[];
   created_at: string;
   user?: {
     id: string;
@@ -41,10 +42,19 @@ export const useProjectMessages = (projectId: string | null) => {
       if (usersError) throw usersError;
 
       // Combine the data
-      return messagesData.map((message) => ({
+      const projectMessages = messagesData.map((message) => ({
         ...message,
         user: usersData?.find(user => user.id === message.user_id),
       })) as ProjectMessage[];
+
+      // Get image URLs for each message
+      for (const message of projectMessages) {
+        if (message.image_urls) {
+          message.image_urls = message.image_urls.map(url => supabase.storage.from("project-messages").getPublicUrl(url).data.publicUrl);
+        }
+      }
+
+      return projectMessages;
     },
     enabled: !!projectId,
   });
@@ -55,15 +65,21 @@ export const useSendProjectMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ projectId, content }: { projectId: string; content: string }) => {
+    mutationFn: async ({ projectId, content, imageUrls }: { projectId: string; content: string; imageUrls?: string[] }) => {
       if (!user?.id) throw new Error("User not authenticated");
+
+      // Ensure we have either content or images
+      if (!content.trim() && (!imageUrls || imageUrls.length === 0)) {
+        throw new Error("Message must have either content or images");
+      }
 
       const { data, error } = await supabase
         .from("project_messages")
         .insert({
           project_id: projectId,
           user_id: user.id,
-          content: content.trim(),
+          content: content.trim() || "", // Allow empty content for image-only messages
+          image_urls: imageUrls || [],
         })
         .select()
         .single();
@@ -76,7 +92,7 @@ export const useSendProjectMessage = () => {
       queryClient.invalidateQueries({ queryKey: ["project-messages", data.project_id] });
       // Also invalidate activity logs since the trigger will add a new log
       queryClient.invalidateQueries({ queryKey: ["activity-logs", data.project_id] });
-      
+
       toast({
         title: "Message sent",
         description: "Your message has been posted successfully.",
@@ -110,7 +126,7 @@ export const useDeleteProjectMessage = () => {
       // Invalidate queries with the projectId
       queryClient.invalidateQueries({ queryKey: ["project-messages", data.projectId] });
       queryClient.invalidateQueries({ queryKey: ["activity-logs", data.projectId] });
-      
+
       toast({
         title: "Message deleted",
         description: "The message has been deleted successfully.",

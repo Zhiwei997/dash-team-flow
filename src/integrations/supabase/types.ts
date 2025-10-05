@@ -333,6 +333,13 @@ export type Database = {
             referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "messages_sender_id_fkey1"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       project_files: {
@@ -416,6 +423,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          image_urls: Json | null
           project_id: string
           user_id: string
         }
@@ -423,6 +431,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          image_urls?: Json | null
           project_id: string
           user_id: string
         }
@@ -430,6 +439,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          image_urls?: Json | null
           project_id?: string
           user_id?: string
         }
@@ -555,6 +565,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          onboarded: boolean | null
           postal_code: string
           province: string
           role: string
@@ -567,6 +578,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          onboarded?: boolean | null
           postal_code: string
           province: string
           role: string
@@ -579,6 +591,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          onboarded?: boolean | null
           postal_code?: string
           province?: string
           role?: string

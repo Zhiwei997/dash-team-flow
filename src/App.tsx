@@ -19,6 +19,8 @@ import CreateProject from "./pages/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import { JobDetail } from "./pages/JobDetail";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
+import Setup from "./pages/Setup";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,8 @@ const App = () => (
               <Route path="/create-project" element={<CreateProject />} />
               <Route path="/project/:id" element={<ProjectDetails />} />
               <Route path="/jobs/:jobId" element={<JobDetail />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/setup" element={<Setup />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -2,8 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Paperclip, Send, Download, FileText, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -106,7 +104,23 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       return;
     }
 
-    setMessages(messagesWithSenders);
+    const messagesWithSignedUrls = await Promise.all(messagesWithSenders.map(async (message) => {
+      if (!message.file_url) return message;
+
+      const { data, error } = await supabase.storage.from("chat-files").createSignedUrl(message.file_url, 3600);
+
+      if (error) {
+        console.error("Error creating signed URL:", error);
+        return message;
+      }
+
+      return {
+        ...message,
+        file_url: data.signedUrl,
+      };
+    }));
+
+    setMessages(messagesWithSignedUrls as Message[]);
     setMessagesLoading(false);
   }, [conversation?.id, conversation.members]);
 
@@ -225,14 +239,10 @@ const ChatInterface = ({ conversation, onBack }: ChatInterfaceProps) => {
       return;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from("chat-files")
-      .getPublicUrl(fileName);
-
     const { error: messageError } = await supabase.from("messages").insert({
       conversation_id: conversation.id,
       sender_id: user.id,
-      file_url: publicUrl,
+      file_url: fileName,
       file_name: file.name,
       file_type: file.type,
       file_size: file.size,

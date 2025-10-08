@@ -114,12 +114,19 @@ export const useDeleteProjectMessage = () => {
 
   return useMutation({
     mutationFn: async ({ messageId, projectId }: { messageId: string; projectId: string }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("project_messages")
         .delete()
-        .eq("id", messageId);
+        .eq("id", messageId)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      const imageUrls = data.image_urls as string[];
+      const { error: storageError } = await supabase.storage.from("project-messages").remove(imageUrls);
+      if (storageError) throw storageError;
+
       return { messageId, projectId };
     },
     onSuccess: (data) => {
